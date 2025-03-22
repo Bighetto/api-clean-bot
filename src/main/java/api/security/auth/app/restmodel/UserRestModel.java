@@ -12,5 +12,6 @@ public class UserRestModel {
     private String name;
     private String email;
     private String phoneNumber;
+    private String planId;
 }
 

@@ -2,8 +2,10 @@ package api.security.auth.app.entrypoints;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import api.bank.app.model.Plan;
+import api.bank.app.repository.PlanRepository;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
-import api.security.auth.app.model.UserModel;
+import api.security.auth.app.model.UserLogin;
 import api.security.auth.app.restmodel.AuthenticationResponseRestModel;
 import api.security.auth.app.restmodel.AuthenticationRestModel;
 import api.security.auth.app.restmodel.ChangePasswordRestModel;
@@ -11,13 +13,17 @@ import api.security.auth.app.restmodel.UserRestModel;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
 import api.security.auth.domain.entity.UserEntity;
+import api.security.auth.domain.enums.UserStatusEnum;
 import api.security.auth.domain.usecase.RegisterNewUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
+import api.security.auth.domain.usecase.UpdatePasswordUserLoginUseCase;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,6 +46,8 @@ public class UserController implements UserResource {
     private final TokenService tokenService;
     private final SecurityConfig securityConfig;
     private final SendEmailUseCase sendEmailUseCase;
+    private final PlanRepository planRepository;
+    private final UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
 
     @Override
     @PostMapping("/create")
@@ -49,8 +57,22 @@ public class UserController implements UserResource {
             UserEntity entity = this.userRestModelToEntityConverter.convertToEntity(restModel);
 
             String encryptedPassword = this.securityConfig.passwordEncoder().encode(entity.getDocument());
+
+            Plan plan = this.planRepository.findById(restModel.getPlanId())
+            .orElseThrow(() -> new RuntimeException("Plano não encontrado"));
             
-            UserModel model = new UserModel(entity.getDocument(), entity.getName(), entity.getEmail(), entity.getPhoneNumber(), "cliente", encryptedPassword, LocalDateTime.now());
+            UserLogin model = new UserLogin(
+                entity.getDocument(),
+                entity.getName(),
+                entity.getEmail(),
+                entity.getPhoneNumber(),
+                "cliente",
+                encryptedPassword,
+                LocalDateTime.now(),
+                plan,
+                new ArrayList<>(),
+                UserStatusEnum.ATIVO    
+            );
 
             this.registerNewUserUseCase.execute(model);
 
@@ -58,32 +80,31 @@ public class UserController implements UserResource {
             
             return ResponseEntity.ok().body("The new user has been registered!");
         }catch(Exception e){
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error registering user.");
         }
         
     }
 
     @Override
-    @PostMapping("/update/password")
-    public ResponseEntity<String> changeUserPassword(@RequestBody ChangePasswordRestModel restmodel) {
-        
-        try{
-            UserEntity entity = this.searchUserByEmailUseCase.execute(restmodel.getEmail());
+@PostMapping("/update/password")
+public ResponseEntity<String> changeUserPassword(@RequestBody ChangePasswordRestModel restModel) {
+    try {
+        UserEntity user = this.searchUserByEmailUseCase.execute(restModel.getEmail());
 
-            String encryptedPassword = this.securityConfig.passwordEncoder().encode(restmodel.getPassword());
-
-            UserModel model = new UserModel(entity.getDocument(), entity.getName(), entity.getEmail(), entity.getPhoneNumber(), restmodel.getTipo(), encryptedPassword, LocalDateTime.now());
-
-            this.registerNewUserUseCase.execute(model);
-
-            return ResponseEntity.ok().body("Passowrd updated successfully");
-
-        }catch(Exception e){
-            return ResponseEntity.badRequest().build();
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
         }
-        
 
+        String encryptedPassword = this.securityConfig.passwordEncoder().encode(restModel.getPassword());
+        
+        this.updatePasswordUserLoginUseCase.execute(user.getDocument(), encryptedPassword);
+
+        return ResponseEntity.ok().body("Password updated successfully.");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating password. Please try again later.");
     }
+}
+
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponseRestModel> createAuthenticationToken(@RequestBody AuthenticationRestModel restModel) {
@@ -93,7 +114,7 @@ public class UserController implements UserResource {
 
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
-            var userDetails = (UserModel)auth.getPrincipal();
+            var userDetails = (UserLogin)auth.getPrincipal();
             var nome = userDetails.getName();
             var email = userDetails.getEmail();
             var role = userDetails.getTipo();

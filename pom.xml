@@ -12,7 +12,7 @@
 	<artifactId>auth</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>auth</name>
-	<description>Microservice responsible to all of security and authentication.</description>
+	<description>Monolito responsible to all of api-clean-bot</description>
 	<url/>
 	<licenses>
 		<license/>

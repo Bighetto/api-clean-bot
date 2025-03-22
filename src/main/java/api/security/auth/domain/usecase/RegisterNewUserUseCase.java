@@ -1,8 +1,8 @@
 package api.security.auth.domain.usecase;
 
-import api.security.auth.app.model.UserModel;
+import api.security.auth.app.model.UserLogin;
 
 public interface RegisterNewUserUseCase {
     
-    void execute(UserModel model);
+    void execute(UserLogin model);
 }

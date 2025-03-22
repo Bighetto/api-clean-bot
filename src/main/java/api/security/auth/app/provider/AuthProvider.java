@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 import api.security.auth.app.converter.UserModelToEntityConverter;
-import api.security.auth.app.model.UserModel;
+import api.security.auth.app.model.UserLogin;
 import api.security.auth.app.repository.UserRepository;
 import api.security.auth.domain.dataprovider.AuthDataProvider;
 import api.security.auth.domain.entity.UserEntity;
@@ -19,14 +19,14 @@ public class AuthProvider implements AuthDataProvider {
     private final UserModelToEntityConverter userModelToEntityConverter;
 
     @Override
-    public void saveNewUser(UserModel model) {
+    public void saveNewUser(UserLogin model) {
         this.userRepository.save(model);
     }
 
     @Override
     public UserEntity findByDocument(String document) {
 
-        Optional<UserModel> model = this.userRepository.findById(document);
+        Optional<UserLogin> model = this.userRepository.findById(document);
 
         if (model.isEmpty()) {
             throw new RuntimeException();
@@ -37,13 +37,26 @@ public class AuthProvider implements AuthDataProvider {
 
     @Override
     public UserEntity findByEmail(String email) {
-        Optional<UserModel> model = Optional.ofNullable(this.userRepository.findByEmail(email));
+        Optional<UserLogin> model = Optional.ofNullable(this.userRepository.findByEmail(email));
 
         if (model.isEmpty()) {
             throw new RuntimeException();
         }
 
         return this.userModelToEntityConverter.convertToEntity(model.get());
+    }
+
+    @Override
+    public void updatePassword(String document, String password) {
+        
+        Optional<UserLogin> optionalUser = userRepository.findById(document);
+        if (optionalUser.isPresent()) {
+            UserLogin user = optionalUser.get();
+            user.setPassword(password);
+            userRepository.save(user);
+        } else {
+            throw new RuntimeException("User not found");
+        }
     }
     
 }

@@ -11,6 +11,5 @@ public class ChangePasswordRestModel {
 
     private String email;
     private String password;
-    private String tipo;
     
 }
