@@ -8,10 +8,10 @@
 		<version>3.4.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>api.security</groupId>
-	<artifactId>auth</artifactId>
+	<groupId>api</groupId>
+	<artifactId>api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>auth</name>
+	<name>api-clean-bot</name>
 	<description>Monolito responsible to all of api-clean-bot</description>
 	<url/>
 	<licenses>

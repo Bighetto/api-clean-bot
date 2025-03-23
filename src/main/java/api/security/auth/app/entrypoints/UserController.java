@@ -2,8 +2,11 @@ package api.security.auth.app.entrypoints;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import api.bank.app.converter.PlanModelToEntityConverter;
 import api.bank.app.model.Plan;
 import api.bank.app.repository.PlanRepository;
+import api.bank.domain.dataprovider.PlanDataProvider;
+import api.bank.domain.entity.PlanEntity;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
 import api.security.auth.app.model.UserLogin;
 import api.security.auth.app.restmodel.AuthenticationResponseRestModel;
@@ -46,8 +49,10 @@ public class UserController implements UserResource {
     private final TokenService tokenService;
     private final SecurityConfig securityConfig;
     private final SendEmailUseCase sendEmailUseCase;
-    private final PlanRepository planRepository;
+    private final PlanDataProvider planDataProvider;
+    private final PlanModelToEntityConverter planConverter;
     private final UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
+
 
     @Override
     @PostMapping("/create")
@@ -58,8 +63,7 @@ public class UserController implements UserResource {
 
             String encryptedPassword = this.securityConfig.passwordEncoder().encode(entity.getDocument());
 
-            Plan plan = this.planRepository.findById(restModel.getPlanId())
-            .orElseThrow(() -> new RuntimeException("Plano não encontrado"));
+            PlanEntity plan = this.planDataProvider.findPlanById(restModel.getPlanId());
             
             UserLogin model = new UserLogin(
                 entity.getDocument(),
@@ -69,7 +73,7 @@ public class UserController implements UserResource {
                 "cliente",
                 encryptedPassword,
                 LocalDateTime.now(),
-                plan,
+                planConverter.convertToModel(plan),
                 new ArrayList<>(),
                 UserStatusEnum.ATIVO    
             );
