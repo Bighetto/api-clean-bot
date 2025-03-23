@@ -49,7 +49,7 @@ public class TokenService{
 
 
     private Date generateExpirationDate() {
-        LocalDateTime expirationDateTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime expirationDateTime = LocalDateTime.now().plusHours(6);
         return Date.from(expirationDateTime.toInstant(ZoneOffset.of("-03:00")));
     }
     
