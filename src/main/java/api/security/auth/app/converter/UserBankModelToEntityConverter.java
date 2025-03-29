@@ -1,4 +1,4 @@
-package api.bank.app.converter;
+package api.security.auth.app.converter;
 
 import org.springframework.stereotype.Component;
 
@@ -7,7 +7,7 @@ import api.bank.domain.entity.BankUserEntity;
 import api.security.auth.domain.utils.abstractClasses.ConvertCase;
 
 @Component
-public class BankUserModelToEntityConverter extends ConvertCase<BankUserEntity, BankUser> {
+public class UserBankModelToEntityConverter extends ConvertCase<BankUserEntity, BankUser> {
 
     @Override
     public BankUser convertToModel(BankUserEntity entity) {
@@ -17,14 +17,15 @@ public class BankUserModelToEntityConverter extends ConvertCase<BankUserEntity, 
 
     @Override
     public BankUserEntity convertToEntity(BankUser model) {
+        
         return BankUserEntity.builder()
-        .id(model.getId())
-        .userLoginId(model.getUser().getDocument())
-        .bankName(model.getBank().getName())
-        .login(model.getLogin())
-        .password(model.getPassword())
-        .nickname(model.getNickname())
-        .build();
+                .id(model.getId())
+                .bankName(model.getBank().getName())
+                .login(model.getLogin())
+                .password(model.getPassword())
+                .nickname(model.getNickname())
+                .userLoginId(model.getUser().getDocument())
+                .build();
     }
-
+    
 }

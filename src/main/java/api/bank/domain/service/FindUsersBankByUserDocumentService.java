@@ -2,22 +2,26 @@ package api.bank.domain.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.security.auth.domain.dataprovider.AuthDataProvider;
+import api.security.auth.domain.entity.UserEntity;
+import lombok.AllArgsConstructor;
 
 @Service
+@AllArgsConstructor
 public class FindUsersBankByUserDocumentService implements FindUsersBankByUserDocumentUseCase{
 
-    @Autowired
-    BankUserDataProvider bankUserDataProvider;
+    private final AuthDataProvider authDataProvider;
 
     @Override
-    public List<BankUserEntity> execute(String document) {
-        return this.bankUserDataProvider.findUsersBankByUserDocument(document);
+    public List<BankUserEntity> execute(String email) {
+
+        UserEntity userAuth = this.authDataProvider.findByEmail(email);
+
+        return userAuth.getUserBanks();
     }
 
 }

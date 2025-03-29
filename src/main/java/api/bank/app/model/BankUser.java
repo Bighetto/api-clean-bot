@@ -18,8 +18,9 @@ public class BankUser {
     @JoinColumn(name = "user_id", referencedColumnName = "document")
     private UserLogin user;
 
-    @Column(nullable = false)
-    private String bankName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_id", referencedColumnName = "id", nullable = false)
+    private Bank bank;
 
     @Column(nullable = false)
     private String login;

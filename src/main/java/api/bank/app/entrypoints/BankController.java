@@ -25,26 +25,28 @@ public class BankController implements BankResource {
     private final FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
 
-    @GetMapping
-    public ResponseEntity<String> teste() {
-        return ResponseEntity.ok().body("Teste");
-    }
-
     @Override
-    @GetMapping("/{document}")
-    public ResponseEntity<List<BankUserRestModel>> findUsersBankByUser(@PathVariable String document) {
+    @GetMapping("/{email}")
+    public ResponseEntity<List<BankUserRestModel>> findUsersBankByUser(@PathVariable String email) {
 
-        List<BankUserEntity> entitysList = this.findUsersBankByUserDocumentUseCase.execute(document);
+        try{
+            List<BankUserEntity> entitysList = this.findUsersBankByUserDocumentUseCase.execute(email);
 
-        if (entitysList.isEmpty()) {
-            throw new RuntimeException("That user has no bank accounts");
+            if (entitysList.isEmpty()) {
+                throw new RuntimeException("That user has no bank accounts");
+            }
+    
+            List<BankUserRestModel> restModels = entitysList.stream()
+                .map(entity -> bankUserEntityToRestModelConverter.convertToModel(entity))
+                .collect(Collectors.toList());
+    
+            return ResponseEntity.ok().body(restModels);
+        
+        }catch (Exception e){
+            return ResponseEntity.notFound().build();
         }
-
-        List<BankUserRestModel> restModels = entitysList.stream()
-            .map(entity -> bankUserEntityToRestModelConverter.convertToModel(entity))
-            .collect(Collectors.toList());
-
-        return ResponseEntity.ok().body(restModels);
     }
+
+        
 
 }

@@ -11,6 +11,7 @@ import api.bank.app.model.BankUser;
 import api.bank.app.repository.BankUserRepository;
 import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.entity.BankUserEntity;
+import api.security.auth.app.model.UserLogin;
 import lombok.AllArgsConstructor;
 
 @Component
@@ -25,8 +26,8 @@ public class BankUserProvider implements BankUserDataProvider {
 
 
     @Override
-    public List<BankUserEntity> findUsersBankByUserDocument(String document) {
-        List<BankUser> modelsList = this.bankUserRepository.findByUserDocument(document);
+    public List<BankUserEntity> findUsersBankByUser(UserLogin document) {
+        List<BankUser> modelsList = this.bankUserRepository.findByUser(document);
 
         if (modelsList.isEmpty()) {
             throw new RuntimeException();

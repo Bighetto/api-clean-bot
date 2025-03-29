@@ -3,8 +3,6 @@ package api.security.auth.app.entrypoints;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.bank.app.converter.PlanModelToEntityConverter;
-import api.bank.app.model.Plan;
-import api.bank.app.repository.PlanRepository;
 import api.bank.domain.dataprovider.PlanDataProvider;
 import api.bank.domain.entity.PlanEntity;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
@@ -90,8 +88,8 @@ public class UserController implements UserResource {
     }
 
     @Override
-@PostMapping("/update/password")
-public ResponseEntity<String> changeUserPassword(@RequestBody ChangePasswordRestModel restModel) {
+    @PostMapping("/update/password")
+    public ResponseEntity<String> changeUserPassword(@RequestBody ChangePasswordRestModel restModel) {
     try {
         UserEntity user = this.searchUserByEmailUseCase.execute(restModel.getEmail());
 

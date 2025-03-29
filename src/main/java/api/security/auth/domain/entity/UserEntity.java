@@ -1,7 +1,9 @@
 package api.security.auth.domain.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import api.bank.domain.entity.BankUserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,5 +19,6 @@ public class UserEntity {
     private LocalDateTime registerDate;
     private String phoneNumber;
     private String tipo;
+    private List<BankUserEntity> userBanks;
     
 }
