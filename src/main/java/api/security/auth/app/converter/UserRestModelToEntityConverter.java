@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 import api.security.auth.app.restmodel.UserRestModel;
 import api.security.auth.domain.entity.UserEntity;
-import api.security.auth.domain.utils.abstractClasses.ConvertCase;
+import api.utils.abstractClasses.ConvertCase;
 
 @Component
 public class UserRestModelToEntityConverter extends ConvertCase<UserEntity, UserRestModel> {

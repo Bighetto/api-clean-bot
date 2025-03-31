@@ -1,4 +1,4 @@
-package api.security.auth.domain.utils.abstractClasses;
+package api.utils.abstractClasses;
 
 import java.util.List;
 import java.util.stream.Collectors;
