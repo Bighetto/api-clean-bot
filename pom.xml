@@ -122,7 +122,9 @@
                     <exclude>**/*Filter*</exclude>
                     <exclude>**/*UserContext*</exclude>
                     <exclude>**/*Application*</exclude>
-                    <exclude>**/english/system/classes/utils/abstractClasses/*</exclude>
+                    <exclude>**/api/utils/abstractClasses/*</exclude>
+					<exclude>**/model/*</exclude>
+					<exclude>**/api/security/auth/app/security/*</exclude>
                 </excludes>
             </configuration>
         	</plugin>

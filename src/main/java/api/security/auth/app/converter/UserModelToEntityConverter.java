@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import api.security.auth.app.model.UserLogin;
 import api.security.auth.domain.entity.UserEntity;
-import api.security.auth.domain.utils.abstractClasses.ConvertCase;
+import api.utils.abstractClasses.ConvertCase;
 import lombok.AllArgsConstructor;
 
 @Component

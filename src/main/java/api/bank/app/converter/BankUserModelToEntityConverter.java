@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 import api.bank.app.model.BankUser;
 import api.bank.domain.entity.BankUserEntity;
-import api.security.auth.domain.utils.abstractClasses.ConvertCase;
+import api.utils.abstractClasses.ConvertCase;
 
 @Component
 public class BankUserModelToEntityConverter extends ConvertCase<BankUserEntity, BankUser> {
