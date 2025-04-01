@@ -5,12 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,7 +22,6 @@ import api.bank.app.model.Plan;
 import api.bank.app.provider.PlanProvider;
 import api.bank.app.repository.PlanRepository;
 import api.bank.domain.entity.PlanEntity;
-import api.security.auth.app.model.UserLogin;
 
 @ExtendWith(MockitoExtension.class)
 public class PlanDataProviderTest {
