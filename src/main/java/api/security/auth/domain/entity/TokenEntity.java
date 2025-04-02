@@ -13,8 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TokenEntity {
 
-    private String id;
-    private String userId;
+    private String userEmail;
     private String token;
-    private LocalDateTime createdAt;
+    private LocalDateTime expirationDateTime;
 }

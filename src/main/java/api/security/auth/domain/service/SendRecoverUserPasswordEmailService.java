@@ -17,7 +17,6 @@ public class SendRecoverUserPasswordEmailService implements SendRecoverUserPassw
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-
     @Override
     public void execute(String name, String to, String token) {
 

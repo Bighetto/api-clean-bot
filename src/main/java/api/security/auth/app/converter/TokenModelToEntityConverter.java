@@ -18,11 +18,9 @@ public class TokenModelToEntityConverter extends ConvertCase<TokenEntity, Token>
     @Override
     public TokenEntity convertToEntity(Token model) {
         return new TokenEntity().builder()
-            .id(model.getId())
-            .userId(model.getUser()
-            .getDocument())
+            .userEmail(model.getUserEmail())
             .token(model.getToken())
-            .createdAt(model.getCreatedAt())
+            .expirationDateTime(model.getExpirationDateTime())
         .build();
     }
 

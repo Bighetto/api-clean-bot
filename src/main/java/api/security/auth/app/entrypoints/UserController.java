@@ -137,19 +137,19 @@ public class UserController implements UserResource {
     }
 
     @Override
-    @PostMapping("/recoverPassword/{email}")
-    public ResponseEntity<String> recoverUserPassword(@PathVariable String email) {
+    @PostMapping("/recoverPassword/{userEmail}")
+    public ResponseEntity<String> recoverUserPassword(@PathVariable String userEmail) {
 
         try {
-            UserEntity user = this.searchUserByEmailUseCase.execute(email);
+            UserEntity user = this.searchUserByEmailUseCase.execute(userEmail);
     
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
             }
 
-            TokenEntity token = this.generateTokenUseCase.execute(email);
+            TokenEntity token = this.generateTokenUseCase.execute(userEmail);
 
-            this.sendRecoverUserPasswordEmailUseCase.execute(user.getName(), email, token.getToken());
+            this.sendRecoverUserPasswordEmailUseCase.execute(user.getName(), userEmail, token.getToken());
 
             return ResponseEntity.ok().body("Password reset email sent successfully");
 
