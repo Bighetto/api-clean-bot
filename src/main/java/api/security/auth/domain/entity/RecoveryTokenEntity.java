@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @NoArgsConstructor
-public class TokenEntity {
+public class RecoveryTokenEntity {
 
     private String userEmail;
     private String token;

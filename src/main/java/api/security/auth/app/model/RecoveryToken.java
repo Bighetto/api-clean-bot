@@ -2,8 +2,6 @@ package api.security.auth.app.model;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -20,7 +18,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class Token {
+public class RecoveryToken {
 
     @Id
     private String userEmail;

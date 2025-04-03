@@ -25,10 +25,10 @@ import api.security.auth.app.restmodel.ChangePasswordRestModel;
 import api.security.auth.app.restmodel.UserRestModel;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
-import api.security.auth.domain.entity.TokenEntity;
+import api.security.auth.domain.entity.RecoveryTokenEntity;
 import api.security.auth.domain.entity.UserEntity;
 import api.security.auth.domain.enums.UserStatusEnum;
-import api.security.auth.domain.usecase.GenerateTokenUseCase;
+import api.security.auth.domain.usecase.GenerateRecoveryTokenUseCase;
 import api.security.auth.domain.usecase.RegisterNewUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
@@ -53,7 +53,7 @@ public class UserController implements UserResource {
     private final PlanDataProvider planDataProvider;
     private final PlanModelToEntityConverter planConverter;
     private final UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
-    private final GenerateTokenUseCase generateTokenUseCase;
+    private final GenerateRecoveryTokenUseCase generateTokenUseCase;
     private final SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
 
 
@@ -147,7 +147,7 @@ public class UserController implements UserResource {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
             }
 
-            TokenEntity token = this.generateTokenUseCase.execute(userEmail);
+            RecoveryTokenEntity token = this.generateTokenUseCase.execute(userEmail);
 
             this.sendRecoverUserPasswordEmailUseCase.execute(user.getName(), userEmail, token.getToken());
 

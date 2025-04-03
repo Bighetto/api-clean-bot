@@ -21,9 +21,9 @@ import api.bank.domain.dataprovider.PlanDataProvider;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
-import api.security.auth.domain.entity.TokenEntity;
+import api.security.auth.domain.entity.RecoveryTokenEntity;
 import api.security.auth.domain.entity.UserEntity;
-import api.security.auth.domain.usecase.GenerateTokenUseCase;
+import api.security.auth.domain.usecase.GenerateRecoveryTokenUseCase;
 import api.security.auth.domain.usecase.RegisterNewUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
@@ -54,7 +54,7 @@ public class UserResourceTest {
     @Mock
     private UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
     @Mock
-    private GenerateTokenUseCase generateTokenUseCase;
+    private GenerateRecoveryTokenUseCase generateTokenUseCase;
     @Mock
     private SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
 
@@ -73,7 +73,7 @@ public class UserResourceTest {
         user.setEmail(userEmail);
         user.setName("TestName");
 
-        TokenEntity token = new TokenEntity();
+        RecoveryTokenEntity token = new RecoveryTokenEntity();
         token.setToken("TestToken");
 
         when(this.searchUserByEmailUseCase.execute(userEmail)).thenReturn(user);
@@ -98,5 +98,19 @@ public class UserResourceTest {
         ResponseEntity<String> response = this.controller.recoverUserPassword("NotFound");
         
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenTokenGenerationFails() {
+        String email = "test@email.com";
+        UserEntity user = new UserEntity(); 
+        user.setName("Test User");
+
+        when(searchUserByEmailUseCase.execute(email)).thenReturn(user);
+        when(generateTokenUseCase.execute(email)).thenThrow(new RuntimeException("Token error"));
+
+        ResponseEntity<?> response = controller.recoverUserPassword(email);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 }
