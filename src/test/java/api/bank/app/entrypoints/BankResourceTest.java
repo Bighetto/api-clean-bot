@@ -60,7 +60,6 @@ public class BankResourceTest {
 
         assertEquals(1, response.getBody().size());
         assertEquals(HttpStatus.OK, response.getStatusCode());
-
     }
 
     @Test

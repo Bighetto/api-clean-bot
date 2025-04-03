@@ -11,4 +11,5 @@ public interface UserResource {
 
     ResponseEntity<String> changeUserPassword(ChangePasswordRestModel restmodel);
     
+    ResponseEntity<String> recoverUserPassword(String email);
 }
