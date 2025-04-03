@@ -132,7 +132,7 @@ public class UserController implements UserResource {
     
             return ResponseEntity.ok(responseRestModel);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 

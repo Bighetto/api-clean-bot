@@ -2,6 +2,7 @@ package api.security.auth.domain.dataprovider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -94,10 +95,8 @@ public class RecoveryTokenDataProviderTest {
         String userEmail = "test@example.com";
         when(tokenRepository.findByUserEmail(userEmail)).thenReturn(null);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tokenProvider.findTokenByUserEmail(userEmail);
-        });
-        assertEquals("User not found", exception.getMessage());
+        RecoveryTokenEntity result = tokenProvider.findTokenByUserEmail(userEmail);
+        assertNull(result);
     }
 
     @Test

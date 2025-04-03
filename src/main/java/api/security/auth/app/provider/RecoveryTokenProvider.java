@@ -28,7 +28,7 @@ public class RecoveryTokenProvider implements RecoveryTokenDataProvider {
         RecoveryToken token = this.tokenRepository.findByUserEmail(userEmail);
 
         if(token == null) {
-            throw new RuntimeException("User not found");
+            return null;
         }
 
         return this.tokenModelToEntityConverter.convertToEntity(token);
