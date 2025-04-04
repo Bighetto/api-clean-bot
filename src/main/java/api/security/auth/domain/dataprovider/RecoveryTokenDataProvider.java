@@ -9,5 +9,7 @@ public interface RecoveryTokenDataProvider {
 
     RecoveryTokenEntity findTokenByUserEmail(String userEmail);
 
+    RecoveryTokenEntity findByToken(String token);
+
     void deleteTokenByUserEmail(String userEmail);
 }

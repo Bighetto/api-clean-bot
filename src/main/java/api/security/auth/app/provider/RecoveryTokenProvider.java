@@ -35,6 +35,17 @@ public class RecoveryTokenProvider implements RecoveryTokenDataProvider {
     }
 
     @Override
+    public RecoveryTokenEntity findByToken(String token) {
+        RecoveryToken recoveryToken = this.tokenRepository.findByToken(token);
+
+        if(recoveryToken == null) {
+            return null;
+        }
+
+        return this.tokenModelToEntityConverter.convertToEntity(recoveryToken);
+    }
+
+    @Override
     public void deleteTokenByUserEmail(String userEmail) {
         this.tokenRepository.deleteByUserEmail(userEmail);
     }
