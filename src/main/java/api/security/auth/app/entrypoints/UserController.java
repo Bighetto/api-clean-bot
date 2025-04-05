@@ -35,7 +35,7 @@ import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
 import api.security.auth.domain.usecase.SendRecoverUserPasswordEmailUseCase;
 import api.security.auth.domain.usecase.UpdatePasswordUserLoginUseCase;
-import api.security.auth.domain.usecase.ValidadeTokenUseCase;
+import api.security.auth.domain.usecase.ValidadeExpirationTokenUseCase;
 import lombok.AllArgsConstructor;
 
 
@@ -57,7 +57,7 @@ public class UserController implements UserResource {
     private final UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
     private final GenerateRecoveryTokenUseCase generateTokenUseCase;
     private final SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
-    private final ValidadeTokenUseCase validadeTokenUseCase;
+    private final ValidadeExpirationTokenUseCase validadeTokenUseCase;
 
 
     @Override
@@ -162,7 +162,7 @@ public class UserController implements UserResource {
     }
 
     @Override
-    @PostMapping("/changePassword/{token}")
+    @PostMapping("/renewPassword/{token}")
     public ResponseEntity<String> renewUserPassword(@PathVariable String token, @RequestBody ChangeUserPasswordRequestDTO dto) {
         
         try {

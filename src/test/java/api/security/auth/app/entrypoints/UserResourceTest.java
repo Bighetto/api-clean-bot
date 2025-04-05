@@ -33,7 +33,7 @@ import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
 import api.security.auth.domain.usecase.SendRecoverUserPasswordEmailUseCase;
 import api.security.auth.domain.usecase.UpdatePasswordUserLoginUseCase;
-import api.security.auth.domain.usecase.ValidadeTokenUseCase;
+import api.security.auth.domain.usecase.ValidadeExpirationTokenUseCase;
 
 @ExtendWith(MockitoExtension.class)
 public class UserResourceTest {
@@ -63,7 +63,7 @@ public class UserResourceTest {
     @Mock
     private SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
     @Mock
-    private ValidadeTokenUseCase validadeTokenUseCase;
+    private ValidadeExpirationTokenUseCase validadeTokenUseCase;
     @Mock
     PasswordEncoder passwordEncoder;
 

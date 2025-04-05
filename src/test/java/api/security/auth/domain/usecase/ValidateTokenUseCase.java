@@ -13,19 +13,19 @@ import org.mockito.MockitoAnnotations;
 
 import api.security.auth.domain.dataprovider.RecoveryTokenDataProvider;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
-import api.security.auth.domain.service.ValidateTokenService;
+import api.security.auth.domain.service.ValidateRecoveryTokenService;
 
 public class ValidateTokenUseCase {
 
     @Mock
     private RecoveryTokenDataProvider recoveryTokenDataProvider;
 
-    ValidadeTokenUseCase validateTokenUseCase;
+    ValidadeExpirationTokenUseCase validateTokenUseCase;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        validateTokenUseCase = new ValidateTokenService(recoveryTokenDataProvider);
+        validateTokenUseCase = new ValidateRecoveryTokenService(recoveryTokenDataProvider);
     }    
 
     @Test

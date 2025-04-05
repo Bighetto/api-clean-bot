@@ -4,12 +4,12 @@ import org.springframework.stereotype.Component;
 
 import api.security.auth.domain.dataprovider.RecoveryTokenDataProvider;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
-import api.security.auth.domain.usecase.ValidadeTokenUseCase;
+import api.security.auth.domain.usecase.ValidadeExpirationTokenUseCase;
 import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class ValidateTokenService implements ValidadeTokenUseCase {
+public class ValidateRecoveryTokenService implements ValidadeExpirationTokenUseCase {
 
     private final RecoveryTokenDataProvider recoveryTokenDataProvider;
 
