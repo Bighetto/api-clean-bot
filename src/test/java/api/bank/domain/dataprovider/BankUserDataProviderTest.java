@@ -40,7 +40,7 @@ public class BankUserDataProviderTest {
     void setUp() {
 
         MockitoAnnotations.openMocks(this);
-        bankUserProvider = new BankUserProvider(bankUserRepository, bankUserModelToEntityConverter);
+        bankUserProvider = new BankUserProvider(bankUserRepository, null, null, bankUserModelToEntityConverter);
     
     }
 

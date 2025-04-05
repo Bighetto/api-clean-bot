@@ -1,29 +1,49 @@
 package api.bank.app.provider;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import api.bank.app.converter.BankUserModelToEntityConverter;
+import api.bank.app.model.Bank;
 import api.bank.app.model.BankUser;
 import api.bank.app.repository.BankUserRepository;
+import api.bank.app.restmodel.UploadBankUserRequestRestModel;
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.entity.BankUserEntity;
 import api.security.auth.app.model.UserLogin;
+import api.security.auth.domain.dataprovider.AuthDataProvider;
 import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
 public class BankUserProvider implements BankUserDataProvider {
 
-    @Autowired
-    BankUserRepository bankUserRepository;
+    private final BankUserRepository bankUserRepository;
+    private final AuthDataProvider authDataProvider;
+    private final BankDataProvider bankDataProvider;
 
-    @Autowired
-    BankUserModelToEntityConverter bankUserModelToEntityConverter;
+    
+    private final BankUserModelToEntityConverter bankUserModelToEntityConverter;
 
+    @Override
+    public void uploadBankUser(UploadBankUserRequestRestModel restModel) {
+        Bank bank = this.bankDataProvider.findByName(restModel.getBankName());
+        UserLogin userLogin = this.authDataProvider.findUserLoginByUserEmail(restModel.getUserEmail());
+
+        BankUser bankUser = new BankUser();
+        bankUser.setId(UUID.randomUUID().toString());
+        bankUser.setUser(userLogin);
+        bankUser.setBank(bank);
+        bankUser.setLogin(restModel.getLogin());
+        bankUser.setPassword(restModel.getPassword());
+        bankUser.setNickname(restModel.getNickname());
+
+        this.bankUserRepository.save(bankUser);
+    }
 
     @Override
     public List<BankUserEntity> findUsersBankByUser(UserLogin document) {
@@ -37,5 +57,4 @@ public class BankUserProvider implements BankUserDataProvider {
             .map(model -> bankUserModelToEntityConverter.convertToEntity(model))
             .collect(Collectors.toList());
     }
-
 }

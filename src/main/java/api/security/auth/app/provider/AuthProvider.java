@@ -40,7 +40,7 @@ public class AuthProvider implements AuthDataProvider {
         Optional<UserLogin> model = Optional.ofNullable(this.userRepository.findByEmail(email));
 
         if (model.isEmpty()) {
-            throw new RuntimeException();
+            return null;
         }
 
         return this.userModelToEntityConverter.convertToEntity(model.get());
@@ -57,6 +57,11 @@ public class AuthProvider implements AuthDataProvider {
         } else {
             throw new RuntimeException("User not found");
         }
+    }
+
+    @Override
+    public UserLogin findUserLoginByUserEmail(String userEmail) {
+        return this.userRepository.findByEmail(userEmail);
     }
     
 }

@@ -7,13 +7,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.bank.domain.usecase.UploadBankUserUseCase;
+import api.security.auth.app.security.SecurityConfig;
 import lombok.AllArgsConstructor;
 
 @RequestMapping(value = "/bank")
@@ -24,6 +29,26 @@ public class BankController implements BankResource {
     
     private final FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
+    private final UploadBankUserUseCase uploadBankUserUseCase;
+    private final SecurityConfig securityConfig;
+
+
+    @Override
+    @PostMapping
+    public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
+
+        try {
+            restModel.setPassword(
+                this.securityConfig.passwordEncoder().encode(restModel.getPassword()));
+
+            this.uploadBankUserUseCase.execute(restModel);
+            
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
 
     @Override
     @GetMapping("/{email}")
@@ -46,7 +71,4 @@ public class BankController implements BankResource {
             return ResponseEntity.notFound().build();
         }
     }
-
-        
-
 }

@@ -33,7 +33,7 @@ public class BankResourceTest {
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, null, null);
     }
 
 

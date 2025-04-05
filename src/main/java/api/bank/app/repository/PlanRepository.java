@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import api.bank.app.model.Plan;
 
 @Repository
-public interface PlanRepository extends JpaRepository< Plan, String> {
+public interface PlanRepository extends JpaRepository<Plan, String> {
 
     
     
