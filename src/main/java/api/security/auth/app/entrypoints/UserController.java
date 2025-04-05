@@ -22,6 +22,7 @@ import api.security.auth.app.model.UserLogin;
 import api.security.auth.app.restmodel.AuthenticationResponseRestModel;
 import api.security.auth.app.restmodel.AuthenticationRestModel;
 import api.security.auth.app.restmodel.ChangePasswordRestModel;
+import api.security.auth.app.restmodel.ChangeUserPasswordRequestDTO;
 import api.security.auth.app.restmodel.UserRestModel;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
@@ -34,6 +35,7 @@ import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
 import api.security.auth.domain.usecase.SendRecoverUserPasswordEmailUseCase;
 import api.security.auth.domain.usecase.UpdatePasswordUserLoginUseCase;
+import api.security.auth.domain.usecase.ValidadeExpirationTokenUseCase;
 import lombok.AllArgsConstructor;
 
 
@@ -55,6 +57,7 @@ public class UserController implements UserResource {
     private final UpdatePasswordUserLoginUseCase updatePasswordUserLoginUseCase;
     private final GenerateRecoveryTokenUseCase generateTokenUseCase;
     private final SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
+    private final ValidadeExpirationTokenUseCase validadeTokenUseCase;
 
 
     @Override
@@ -155,6 +158,33 @@ public class UserController implements UserResource {
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @Override
+    @PostMapping("/renewPassword/{token}")
+    public ResponseEntity<String> renewUserPassword(@PathVariable String token, @RequestBody ChangeUserPasswordRequestDTO dto) {
+        
+        try {
+            RecoveryTokenEntity recoveryTokenEntity = this.validadeTokenUseCase.execute(token);
+
+            if(recoveryTokenEntity == null) {
+                return ResponseEntity.notFound().build();
+            } else if(LocalDateTime.now().isAfter(recoveryTokenEntity.getExpirationDateTime())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }         
+
+            UserEntity user = this.searchUserByEmailUseCase.execute(recoveryTokenEntity.getUserEmail());
+
+            String encryptedPassword = this.securityConfig.passwordEncoder().encode(dto.getNewPassword());
+        
+            this.updatePasswordUserLoginUseCase.execute(user.getDocument(), encryptedPassword);
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 }

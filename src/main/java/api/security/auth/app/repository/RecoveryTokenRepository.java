@@ -13,4 +13,6 @@ public interface RecoveryTokenRepository extends JpaRepository<RecoveryToken, St
 
     @Transactional
     void deleteByUserEmail(String userEmail);
+
+    RecoveryToken findByToken(String token);
 }
