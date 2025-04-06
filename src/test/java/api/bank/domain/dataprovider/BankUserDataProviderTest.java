@@ -20,28 +20,57 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import api.bank.app.converter.BankUserModelToEntityConverter;
 import api.bank.app.model.BankUser;
+import api.bank.app.provider.BankProvider;
 import api.bank.app.provider.BankUserProvider;
+import api.bank.app.repository.BankRepository;
 import api.bank.app.repository.BankUserRepository;
+import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
+import api.security.auth.app.converter.UserModelToEntityConverter;
 import api.security.auth.app.model.UserLogin;
+import api.security.auth.app.provider.AuthProvider;
+import api.security.auth.app.repository.UserRepository;
+import api.security.auth.domain.dataprovider.AuthDataProvider;
 
 @ExtendWith(MockitoExtension.class)
 public class BankUserDataProviderTest {
 
     @Mock
     private BankUserRepository bankUserRepository;
-
     @Mock
     private BankUserModelToEntityConverter bankUserModelToEntityConverter;
+    @Mock
+    private BankRepository bankRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private BankUserDataProvider bankUserDataProvider;
+    @Mock
+    private UserModelToEntityConverter userModelToEntityConverter;
 
-    private BankUserDataProvider bankUserProvider;
+    private AuthDataProvider authDataProvider;
+    private BankDataProvider bankDataProvider;
+
+    
 
     @BeforeEach
     void setUp() {
-
         MockitoAnnotations.openMocks(this);
-        bankUserProvider = new BankUserProvider(bankUserRepository, null, null, bankUserModelToEntityConverter);
-    
+
+        authDataProvider = new AuthProvider(userRepository, userModelToEntityConverter);
+        bankDataProvider = new BankProvider(bankRepository);
+
+        bankUserDataProvider = new BankUserProvider(bankUserRepository, authDataProvider, bankDataProvider, bankUserModelToEntityConverter);
+    }
+
+
+    @Test
+    void shouldUploadABankUserWithSucessfull() {
+        UploadBankUserRequestRestModel uploadBankUserRequestRestModel = new UploadBankUserRequestRestModel();
+
+        this.bankUserDataProvider.uploadBankUser(uploadBankUserRequestRestModel);
+
+        verify(bankUserRepository, times(1)).save(any(BankUser.class));
     }
 
     @Test
@@ -63,7 +92,7 @@ public class BankUserDataProviderTest {
 
         when(bankUserModelToEntityConverter.convertToEntity(any())).thenReturn(entity);
 
-        List<BankUserEntity> result = this.bankUserProvider.findUsersBankByUser(userLogin);
+        List<BankUserEntity> result = this.bankUserDataProvider.findUsersBankByUser(userLogin);
 
         assertEquals(1, result.size());
         assertEquals("v8", result.get(0).getBankName());
@@ -77,7 +106,7 @@ public class BankUserDataProviderTest {
 
         when(bankUserRepository.findByUser(any())).thenReturn(List.of());
 
-        assertThrows(RuntimeException.class, () -> bankUserProvider.findUsersBankByUser(userLogin));
+        assertThrows(RuntimeException.class, () -> bankUserDataProvider.findUsersBankByUser(userLogin));
 
         verify(bankUserRepository, times(1)).findByUser(userLogin);
         verify(bankUserModelToEntityConverter, never()).convertToEntity(any());

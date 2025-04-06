@@ -17,6 +17,4 @@ public class UploadBankUserService implements UploadBankUserUseCase {
     public void execute(UploadBankUserRequestRestModel restModel) {
         this.bankUserDataProvider.uploadBankUser(restModel);
     }
-
-    
 }

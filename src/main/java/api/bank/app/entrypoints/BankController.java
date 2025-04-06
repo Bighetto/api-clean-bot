@@ -18,6 +18,7 @@ import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
+import api.bank.domain.usecase.ValidateUserBankV8UseCase;
 import api.security.auth.app.security.SecurityConfig;
 import lombok.AllArgsConstructor;
 
@@ -31,21 +32,23 @@ public class BankController implements BankResource {
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
     private final UploadBankUserUseCase uploadBankUserUseCase;
     private final SecurityConfig securityConfig;
-
+    private final ValidateUserBankV8UseCase validateUserBankV8UseCase;
 
     @Override
     @PostMapping
     public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
 
         try {
-            restModel.setPassword(
-                this.securityConfig.passwordEncoder().encode(restModel.getPassword()));
+            this.validateUserBankV8UseCase.execute(restModel);
+
+            String encryptPassword = this.securityConfig.passwordEncoder().encode(restModel.getPassword());
+            restModel.setPassword(encryptPassword);
 
             this.uploadBankUserUseCase.execute(restModel);
-            
+
             return ResponseEntity.ok().build();
+
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
