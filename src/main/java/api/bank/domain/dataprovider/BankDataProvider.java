@@ -1,8 +1,8 @@
 package api.bank.domain.dataprovider;
 
-import api.bank.app.model.Bank;
+import api.bank.domain.entity.BankEntity;
 
 public interface BankDataProvider {
 
-    Bank findByName(String bankName);
+    BankEntity findByName(String bankName);
 }
