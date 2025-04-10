@@ -40,9 +40,12 @@ public class BankResourceTest {
     @Test
     void shouldReturnListOfUserBankWithSucessful(){
 
+        String userId = UUID.randomUUID().toString(); // cria um ID de teste
+
+
         BankUserEntity userEntity = new BankUserEntity();
         userEntity.setBankName("v8");
-        userEntity.setId(UUID.randomUUID().toString());
+        userEntity.setId(userId);
         userEntity.setLogin("teste");
         userEntity.setNickname("teste");
 
@@ -50,6 +53,7 @@ public class BankResourceTest {
         restModel.setBankName("v8");
         restModel.setNickname("teste");
         restModel.setUsername("teste");
+        restModel.setId(userId);
 
 
         when(this.findUsersBankByUserDocumentUseCase.execute(anyString())).thenReturn(List.of(userEntity));
