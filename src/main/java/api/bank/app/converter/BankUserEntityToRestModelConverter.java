@@ -12,6 +12,7 @@ public class BankUserEntityToRestModelConverter extends ConvertCase<BankUserEnti
     @Override
     public BankUserRestModel convertToModel(BankUserEntity entity) {
         return BankUserRestModel.builder()
+        .id(entity.getId())
         .username(entity.getLogin())
         .bankName(entity.getBankName())
         .nickname(entity.getNickname())

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class BankUserRestModel {
 
+    private String id;
     private String username;
     private String bankName;
     private String nickname;
