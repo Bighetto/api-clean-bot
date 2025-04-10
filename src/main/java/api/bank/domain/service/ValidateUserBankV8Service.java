@@ -2,7 +2,6 @@ package api.bank.domain.service;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -13,43 +12,39 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
+import api.bank.app.restmodel.V8BankRequestDTO;
+import api.bank.domain.dataprovider.V8BankConfigDataProvider;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
-import api.config.V8BankEnviroment;
+import lombok.AllArgsConstructor;
 
 @Component
+@AllArgsConstructor
 public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
 
-    @Value("${api.v8.bank.url}")
-    private String urlGetToken;
-
-    private final V8BankEnviroment v8BankEnviroment;
-
-    public ValidateUserBankV8Service(@Value("${api.v8.bank.url}") String urlGetToken, V8BankEnviroment v8BankEnviroment) {
-        this.urlGetToken = urlGetToken;
-        this.v8BankEnviroment = v8BankEnviroment;
-    }
+    private final V8BankConfigDataProvider v8BankDataProvider;
 
     @Override
     public void execute(UploadBankUserRequestRestModel requestRestModel) throws IOException {
 
         try {
-            v8BankEnviroment.setUsername(requestRestModel.getLogin());
-            v8BankEnviroment.setPassword(requestRestModel.getPassword());
+            V8BankRequestDTO v8BankRequestDTO = new V8BankRequestDTO();
+            v8BankRequestDTO.setUsername(requestRestModel.getLogin());
+            v8BankRequestDTO.setPassword(requestRestModel.getPassword());
+            v8BankRequestDTO.setAudience(this.v8BankDataProvider.getAudience());
+            v8BankRequestDTO.setClientId(this.v8BankDataProvider.getClientId());
+            v8BankRequestDTO.setGrantType(this.v8BankDataProvider.getGrantType());
+            v8BankRequestDTO.setScope(this.v8BankDataProvider.getScope());
 
             RestTemplate restTemplate = new RestTemplate();
 
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("grant_type", v8BankEnviroment.getGrantType());
-            formData.add("username", v8BankEnviroment.getUsername());
-            formData.add("password", v8BankEnviroment.getPassword());
-            formData.add("audience", v8BankEnviroment.getAudience());
-            formData.add("scope", v8BankEnviroment.getScope());
-            formData.add("client_id", v8BankEnviroment.getClientId());
+            formData.add("grant_type", v8BankRequestDTO.getGrantType());
+            formData.add("username", v8BankRequestDTO.getUsername());
+            formData.add("password", v8BankRequestDTO.getPassword());
+            formData.add("audience", v8BankRequestDTO.getAudience());
+            formData.add("scope", v8BankRequestDTO.getScope());
+            formData.add("client_id", v8BankRequestDTO.getClientId());
 
-            System.out.println("grant_type: " + v8BankEnviroment.getGrantType());
-            System.out.println("audience: " + v8BankEnviroment.getAudience());
-            System.out.println("scope: " + v8BankEnviroment.getScope());
-            System.out.println("client_id: " + v8BankEnviroment.getClientId());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -57,16 +52,13 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
 
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    urlGetToken,
+                    this.v8BankDataProvider.getV8BankURL(),
                     request,
                     String.class
                 );
-
-            System.out.println("Body: " + response.getBody());
-
             
         } catch (Exception e) {
-            e.printStackTrace();
+            
         }
     }
 

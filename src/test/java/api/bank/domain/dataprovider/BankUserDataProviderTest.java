@@ -20,11 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import api.bank.app.converter.BankUserModelToEntityConverter;
 import api.bank.app.model.BankUser;
-import api.bank.app.provider.BankProvider;
 import api.bank.app.provider.BankUserProvider;
 import api.bank.app.repository.BankRepository;
 import api.bank.app.repository.BankUserRepository;
-import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.security.auth.app.converter.UserModelToEntityConverter;
 import api.security.auth.app.model.UserLogin;
@@ -58,17 +56,15 @@ public class BankUserDataProviderTest {
         MockitoAnnotations.openMocks(this);
 
         authDataProvider = new AuthProvider(userRepository, userModelToEntityConverter);
-        bankDataProvider = new BankProvider(bankRepository);
-
         bankUserDataProvider = new BankUserProvider(bankUserRepository, authDataProvider, bankDataProvider, bankUserModelToEntityConverter);
     }
 
 
     @Test
     void shouldUploadABankUserWithSucessfull() {
-        UploadBankUserRequestRestModel uploadBankUserRequestRestModel = new UploadBankUserRequestRestModel();
+        BankUser bankUser = new BankUser();
 
-        this.bankUserDataProvider.uploadBankUser(uploadBankUserRequestRestModel);
+        this.bankUserDataProvider.uploadBankUser(bankUser);
 
         verify(bankUserRepository, times(1)).save(any(BankUser.class));
     }

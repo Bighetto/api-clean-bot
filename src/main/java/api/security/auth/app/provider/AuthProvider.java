@@ -58,10 +58,5 @@ public class AuthProvider implements AuthDataProvider {
             throw new RuntimeException("User not found");
         }
     }
-
-    @Override
-    public UserLogin findUserLoginByUserEmail(String userEmail) {
-        return this.userRepository.findByEmail(userEmail);
-    }
     
 }

@@ -12,7 +12,5 @@ public interface AuthDataProvider {
     UserEntity findByEmail(String email);
 
     void updatePassword(String document, String password);
-
-    UserLogin findUserLoginByUserEmail(String userEmail);
     
 }
