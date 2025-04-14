@@ -1,5 +1,6 @@
 package api.bank.domain.usecase;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.BankUserDataProvider;
@@ -63,5 +65,25 @@ public class UploadBankUserUseCaseTest {
         uploadBankUserUseCase.execute(uploadBankUserRequestRestModel);
 
         verify(bankUserDataProvider, times(1)).uploadBankUser(any());
+    }
+
+    @Test
+    void shouldThrowsBankUserAlreadyExistsException() {
+        UploadBankUserRequestRestModel uploadBankUserRequestRestModel = new UploadBankUserRequestRestModel();
+        uploadBankUserRequestRestModel.setLogin("testLogin");
+        uploadBankUserRequestRestModel.setUserEmail("testEmail");
+        uploadBankUserRequestRestModel.setBankName("testName");
+
+        BankEntity bankEntity = new BankEntity();
+        bankEntity.setName("testName");
+        bankEntity.setId("bankId");
+
+        when(bankDataProvider.findByName(anyString())).thenReturn(bankEntity);
+
+        when(this.bankUserDataProvider.existsByLoginAndBankId(uploadBankUserRequestRestModel.getLogin(), bankEntity.getId())).thenReturn(true);
+
+        assertThrows(BankUserAlreadyExistsException.class, () -> 
+            this.uploadBankUserUseCase.execute(uploadBankUserRequestRestModel)
+        );
     }
 }

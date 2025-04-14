@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.model.Bank;
 import api.bank.app.model.BankUser;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
@@ -28,6 +29,12 @@ public class UploadBankUserService implements UploadBankUserUseCase {
     public void execute(UploadBankUserRequestRestModel restModel) {
         UserEntity userEntity = this.authDataProvider.findByEmail(restModel.getUserEmail());
         BankEntity bankEntity = this.bankDataProvider.findByName(restModel.getBankName());
+
+        Boolean exists = this.bankUserDataProvider.existsByLoginAndBankId(restModel.getLogin(), bankEntity.getId());
+
+        if(exists) {
+            throw new BankUserAlreadyExistsException("A bank user with the provided email already exists for the specified bank.");
+        }
 
         UserLogin userLogin = new UserLogin();
         userLogin.setDocument(userEntity.getDocument());

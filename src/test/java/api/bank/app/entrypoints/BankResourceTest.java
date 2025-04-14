@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
+import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
@@ -83,12 +85,28 @@ public class BankResourceTest {
     }
 
     @Test
-    void testUploadBankUserWithException() throws Exception {
+    void testUploadBankUserWithUserBankV8ValidationException() throws Exception {
         UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
-        restModel.setLogin("validUser");
+        restModel.setLogin("invalidUser");
         restModel.setPassword("testpassword");
 
-        doThrow(new RuntimeException()).when(validateUserBankV8UseCase).execute(any());
+        doThrow(new UserBankV8ValidationException(null)).when(validateUserBankV8UseCase).execute(any());
+
+        ResponseEntity<String> response = controller.uploadBankUser(restModel);
+
+        assertEquals(400, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testUploadBankUserWithBankUserAlreadyExistsException() throws Exception {
+        UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
+        restModel.setLogin("invalidUser");
+        restModel.setPassword("testpassword");
+        String encryptedPassword = "encryptedPassword";
+
+        when(passwordEncoder.encode(anyString())).thenReturn(encryptedPassword);
+        when(securityConfig.passwordEncoder()).thenReturn(passwordEncoder);
+        doThrow(new BankUserAlreadyExistsException(null)).when(uploadBankUserUseCase).execute(any());
 
         ResponseEntity<String> response = controller.uploadBankUser(restModel);
 

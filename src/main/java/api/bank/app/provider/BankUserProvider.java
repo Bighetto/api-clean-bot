@@ -41,4 +41,9 @@ public class BankUserProvider implements BankUserDataProvider {
             .map(model -> bankUserModelToEntityConverter.convertToEntity(model))
             .collect(Collectors.toList());
     }
+
+    @Override
+    public Boolean existsByLoginAndBankId(String login, String bankId) {
+        return this.bankUserRepository.existsByLoginAndBankId(login, bankId);
+    }
 }

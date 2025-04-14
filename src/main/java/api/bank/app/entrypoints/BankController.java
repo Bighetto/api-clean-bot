@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
+import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
@@ -37,7 +39,6 @@ public class BankController implements BankResource {
     @Override
     @PostMapping
     public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
-
         try {
             this.validateUserBankV8UseCase.execute(restModel);
 
@@ -48,10 +49,13 @@ public class BankController implements BankResource {
 
             return ResponseEntity.ok().build();
 
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (UserBankV8ValidationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (BankUserAlreadyExistsException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
 
     @Override
     @GetMapping("/{email}")

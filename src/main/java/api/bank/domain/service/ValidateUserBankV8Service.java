@@ -1,16 +1,18 @@
 package api.bank.domain.service;
 
-import java.io.IOException;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.app.restmodel.V8BankRequestDTO;
 import api.bank.domain.dataprovider.V8BankConfigDataProvider;
@@ -24,7 +26,7 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
     private final V8BankConfigDataProvider v8BankDataProvider;
 
     @Override
-    public void execute(UploadBankUserRequestRestModel requestRestModel) throws IOException {
+    public void execute(UploadBankUserRequestRestModel requestRestModel) {
 
         try {
             V8BankRequestDTO v8BankRequestDTO = new V8BankRequestDTO();
@@ -34,6 +36,15 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
             v8BankRequestDTO.setClientId(this.v8BankDataProvider.getClientId());
             v8BankRequestDTO.setGrantType(this.v8BankDataProvider.getGrantType());
             v8BankRequestDTO.setScope(this.v8BankDataProvider.getScope());
+
+            System.out.println("Username: " + v8BankRequestDTO.getUsername());
+            System.out.println("Username: " + v8BankRequestDTO.getUsername());
+            System.out.println("Password: " + v8BankRequestDTO.getPassword());
+            System.out.println("Audience: " + v8BankRequestDTO.getAudience());
+            System.out.println("ClientId: " + v8BankRequestDTO.getClientId());
+            System.out.println("GrantType: " + v8BankRequestDTO.getGrantType());
+            System.out.println("Scope: " + v8BankRequestDTO.getScope());
+            System.out.println("URL: " + this.v8BankDataProvider.getV8BankURL());
 
             RestTemplate restTemplate = new RestTemplate();
 
@@ -51,14 +62,18 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                    this.v8BankDataProvider.getV8BankURL(),
-                    request,
-                    String.class
-                );
+            restTemplate.postForEntity(
+                this.v8BankDataProvider.getV8BankURL(),
+                request,
+                String.class
+            );
             
-        } catch (Exception e) {
-            
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new UserBankV8ValidationException("Authentication error with V8Bank: " + e.getStatusCode());
+        } catch (ResourceAccessException e) {
+            throw new UserBankV8ValidationException("Connection error with V8Bank: " + e.getMessage());
+        } catch (RestClientException e) {
+            throw new UserBankV8ValidationException("Error sending request to V8Bank");
         }
     }
 

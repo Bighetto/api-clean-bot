@@ -22,7 +22,10 @@ public class V8BankConfig {
     @Value("${api.v8.bank.clientid}")
     private String clientId;
 
-    private String grantType = "password";
-    private String scope = "offline_access";
+    @Value("${api.v8.bank.grantType}")
+    private String grantType;
+
+    @Value("${api.v8.bank.scope}")
+    private String scope;
 
 }

@@ -12,4 +12,6 @@ public interface BankUserDataProvider {
 
     List<BankUserEntity> findUsersBankByUser(UserLogin document);
 
+    Boolean existsByLoginAndBankId(String login, String bankId);
+
 }
