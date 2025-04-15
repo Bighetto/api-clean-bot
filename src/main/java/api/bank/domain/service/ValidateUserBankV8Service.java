@@ -37,15 +37,6 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
             v8BankRequestDTO.setGrantType(this.v8BankDataProvider.getGrantType());
             v8BankRequestDTO.setScope(this.v8BankDataProvider.getScope());
 
-            System.out.println("Username: " + v8BankRequestDTO.getUsername());
-            System.out.println("Username: " + v8BankRequestDTO.getUsername());
-            System.out.println("Password: " + v8BankRequestDTO.getPassword());
-            System.out.println("Audience: " + v8BankRequestDTO.getAudience());
-            System.out.println("ClientId: " + v8BankRequestDTO.getClientId());
-            System.out.println("GrantType: " + v8BankRequestDTO.getGrantType());
-            System.out.println("Scope: " + v8BankRequestDTO.getScope());
-            System.out.println("URL: " + this.v8BankDataProvider.getV8BankURL());
-
             RestTemplate restTemplate = new RestTemplate();
 
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
@@ -69,9 +60,9 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
             );
             
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new UserBankV8ValidationException("Authentication error with V8Bank: " + e.getStatusCode());
+            throw new UserBankV8ValidationException("Invalid User");
         } catch (ResourceAccessException e) {
-            throw new UserBankV8ValidationException("Connection error with V8Bank: " + e.getMessage());
+            throw new UserBankV8ValidationException("Connection error with V8Bank");
         } catch (RestClientException e) {
             throw new UserBankV8ValidationException("Error sending request to V8Bank");
         }
