@@ -13,4 +13,6 @@ public interface BankUserRepository extends JpaRepository<BankUser, String> {
     List<BankUser> findByUserDocument(String id);
 
     List<BankUser> findByUser(UserLogin user);
+
+    Boolean existsByLoginAndBankId(String login, String bankId);
 }

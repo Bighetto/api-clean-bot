@@ -7,13 +7,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
+import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.bank.domain.usecase.UploadBankUserUseCase;
+import api.bank.domain.usecase.ValidateUserBankV8UseCase;
+import api.security.auth.app.security.SecurityConfig;
 import lombok.AllArgsConstructor;
 
 @RequestMapping(value = "/bank")
@@ -24,6 +32,30 @@ public class BankController implements BankResource {
     
     private final FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
+    private final UploadBankUserUseCase uploadBankUserUseCase;
+    private final SecurityConfig securityConfig;
+    private final ValidateUserBankV8UseCase validateUserBankV8UseCase;
+
+    @Override
+    @PostMapping
+    public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
+        try {
+            this.validateUserBankV8UseCase.execute(restModel);
+
+            String encryptPassword = this.securityConfig.passwordEncoder().encode(restModel.getPassword());
+            restModel.setPassword(encryptPassword);
+
+            this.uploadBankUserUseCase.execute(restModel);
+
+            return ResponseEntity.ok().build();
+
+        } catch (UserBankV8ValidationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (BankUserAlreadyExistsException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 
     @Override
     @GetMapping("/{email}")
@@ -46,7 +78,4 @@ public class BankController implements BankResource {
             return ResponseEntity.notFound().build();
         }
     }
-
-        
-
 }

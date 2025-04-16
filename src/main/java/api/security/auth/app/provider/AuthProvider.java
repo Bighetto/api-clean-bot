@@ -40,7 +40,7 @@ public class AuthProvider implements AuthDataProvider {
         Optional<UserLogin> model = Optional.ofNullable(this.userRepository.findByEmail(email));
 
         if (model.isEmpty()) {
-            throw new RuntimeException();
+            return null;
         }
 
         return this.userModelToEntityConverter.convertToEntity(model.get());

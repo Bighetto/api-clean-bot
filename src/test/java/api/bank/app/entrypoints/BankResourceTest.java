@@ -3,6 +3,10 @@ package api.bank.app.entrypoints;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -15,11 +19,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
+import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.bank.domain.usecase.UploadBankUserUseCase;
+import api.bank.domain.usecase.ValidateUserBankV8UseCase;
+import api.security.auth.app.security.SecurityConfig;
 
 @ExtendWith(MockitoExtension.class)
 public class BankResourceTest {
@@ -28,13 +39,81 @@ public class BankResourceTest {
     private FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
     @Mock
     private BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
+    @Mock
+    private UploadBankUserUseCase uploadBankUserUseCase;
+    @Mock
+    private SecurityConfig securityConfig; 
+    @Mock 
+    PasswordEncoder passwordEncoder;
+    @Mock
+    private ValidateUserBankV8UseCase validateUserBankV8UseCase;
 
     BankResource controller;
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase);
     }
+
+    @Test
+    void testUploadBankUserSuccess() throws Exception {
+        UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
+        restModel.setLogin("testuser");
+        restModel.setPassword("testpassword");
+        restModel.setBankName("testBankName");
+
+        String encryptedPassword = "encryptedPassword";
+
+        doNothing().when(validateUserBankV8UseCase).execute(any());
+        when(passwordEncoder.encode(anyString())).thenReturn(encryptedPassword);
+        when(securityConfig.passwordEncoder()).thenReturn(passwordEncoder);
+        doNothing().when(uploadBankUserUseCase).execute(any());
+
+        try {
+            
+            ResponseEntity<String> response = controller.uploadBankUser(restModel);
+
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+    
+            verify(validateUserBankV8UseCase, times(1)).execute(restModel);
+            verify(uploadBankUserUseCase, times(1)).execute(restModel);
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+    }
+
+    @Test
+    void testUploadBankUserWithUserBankV8ValidationException() throws Exception {
+        UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
+        restModel.setLogin("invalidUser");
+        restModel.setPassword("testpassword");
+
+        doThrow(new UserBankV8ValidationException(null)).when(validateUserBankV8UseCase).execute(any());
+
+        ResponseEntity<String> response = controller.uploadBankUser(restModel);
+
+        assertEquals(400, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testUploadBankUserWithBankUserAlreadyExistsException() throws Exception {
+        UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
+        restModel.setLogin("invalidUser");
+        restModel.setPassword("testpassword");
+        String encryptedPassword = "encryptedPassword";
+
+        when(passwordEncoder.encode(anyString())).thenReturn(encryptedPassword);
+        when(securityConfig.passwordEncoder()).thenReturn(passwordEncoder);
+        doThrow(new BankUserAlreadyExistsException(null)).when(uploadBankUserUseCase).execute(any());
+
+        ResponseEntity<String> response = controller.uploadBankUser(restModel);
+
+        assertEquals(400, response.getStatusCodeValue());
+    }
+
+
 
 
     @Test
