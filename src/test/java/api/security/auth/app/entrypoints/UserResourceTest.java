@@ -23,6 +23,7 @@ import api.bank.app.converter.PlanModelToEntityConverter;
 import api.bank.domain.dataprovider.PlanDataProvider;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
 import api.security.auth.app.restmodel.ChangeUserPasswordRequestDTO;
+import api.security.auth.app.security.AESEncryptor;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
@@ -65,13 +66,15 @@ public class UserResourceTest {
     @Mock
     private ValidadeExpirationTokenUseCase validadeTokenUseCase;
     @Mock
+    private AESEncryptor aesEncryptor;
+    @Mock
     PasswordEncoder passwordEncoder;
 
     UserResource controller;
 
     @BeforeEach
     void setup() {
-        controller = new UserController(searchUserByEmailUseCase, registerNewUserUseCase, userRestModelToEntityConverter, authenticationManager, tokenService, securityConfig, sendEmailUseCase, planDataProvider, planConverter, updatePasswordUserLoginUseCase, generateTokenUseCase, sendRecoverUserPasswordEmailUseCase, validadeTokenUseCase);
+        controller = new UserController(searchUserByEmailUseCase, registerNewUserUseCase, userRestModelToEntityConverter, authenticationManager, tokenService, securityConfig, sendEmailUseCase, planDataProvider, planConverter, updatePasswordUserLoginUseCase, generateTokenUseCase, sendRecoverUserPasswordEmailUseCase, validadeTokenUseCase, aesEncryptor);
     }
 
     @Test

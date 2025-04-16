@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,12 +19,15 @@ import api.bank.app.converter.PlanModelToEntityConverter;
 import api.bank.domain.dataprovider.PlanDataProvider;
 import api.bank.domain.entity.PlanEntity;
 import api.security.auth.app.converter.UserRestModelToEntityConverter;
+import api.security.auth.app.exception.AESCipherInitializationException;
+import api.security.auth.app.exception.AESEncryptionException;
 import api.security.auth.app.model.UserLogin;
 import api.security.auth.app.restmodel.AuthenticationResponseRestModel;
 import api.security.auth.app.restmodel.AuthenticationRestModel;
 import api.security.auth.app.restmodel.ChangePasswordRestModel;
 import api.security.auth.app.restmodel.ChangeUserPasswordRequestDTO;
 import api.security.auth.app.restmodel.UserRestModel;
+import api.security.auth.app.security.AESEncryptor;
 import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
@@ -58,6 +62,7 @@ public class UserController implements UserResource {
     private final GenerateRecoveryTokenUseCase generateTokenUseCase;
     private final SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
     private final ValidadeExpirationTokenUseCase validadeTokenUseCase;
+    private final AESEncryptor aesEncryptor;
 
 
     @Override
@@ -70,9 +75,11 @@ public class UserController implements UserResource {
             String encryptedPassword = this.securityConfig.passwordEncoder().encode(entity.getDocument());
 
             PlanEntity plan = this.planDataProvider.findPlanById(restModel.getPlanId());
+
+            String userDocumentEncrypt = this.aesEncryptor.encrypt(entity.getDocument());
             
             UserLogin model = new UserLogin(
-                entity.getDocument(),
+                userDocumentEncrypt,
                 entity.getName(),
                 entity.getEmail(),
                 entity.getPhoneNumber(),
@@ -89,7 +96,12 @@ public class UserController implements UserResource {
             this.sendEmailUseCase.execute(entity.getEmail(), entity.getName(), entity.getDocument());
             
             return ResponseEntity.ok().body("The new user has been registered!");
-        }catch(Exception e){
+
+        } catch (AESEncryptionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error encrypting document");
+        } catch(AESCipherInitializationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error registering user.");
         }
         
