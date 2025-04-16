@@ -7,5 +7,7 @@ import api.bank.app.model.Bank;
 
 @Repository
 public interface BankRepository extends JpaRepository<Bank, String> {
+
+    Bank findByName(String bankName);
     
 }
