@@ -46,4 +46,9 @@ public class BankUserProvider implements BankUserDataProvider {
     public Boolean existsByLoginAndBankId(String login, String bankId) {
         return this.bankUserRepository.existsByLoginAndBankId(login, bankId);
     }
+
+    @Override
+    public Integer deleteBankUserById(String id) {
+        return this.bankUserRepository.deleteByIdReturningCount(id);
+    }
 }

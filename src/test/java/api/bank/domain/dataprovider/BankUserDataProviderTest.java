@@ -107,4 +107,13 @@ public class BankUserDataProviderTest {
         verify(bankUserRepository, times(1)).findByUser(userLogin);
         verify(bankUserModelToEntityConverter, never()).convertToEntity(any());
     }
+
+    @Test
+    void shouldCallRepositoryWhenDeleteBankUserId() {
+        String existingId = "123";
+
+        bankUserDataProvider.deleteBankUserById(existingId);
+
+        verify(bankUserRepository, times(1)).deleteByIdReturningCount(existingId);
+    }
 }
