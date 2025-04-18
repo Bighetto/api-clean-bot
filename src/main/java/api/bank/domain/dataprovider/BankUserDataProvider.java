@@ -14,4 +14,5 @@ public interface BankUserDataProvider {
 
     Boolean existsByLoginAndBankId(String login, String bankId);
 
+    Integer deleteBankUserById(String id);
 }

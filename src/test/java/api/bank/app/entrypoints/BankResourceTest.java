@@ -23,10 +23,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.BankUserNotFoundException;
+import api.bank.app.exception.InvalidBankUserIdException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.DeleteBankUserRequestDTO;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
+import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
@@ -47,12 +51,14 @@ public class BankResourceTest {
     PasswordEncoder passwordEncoder;
     @Mock
     private ValidateUserBankV8UseCase validateUserBankV8UseCase;
+    @Mock
+    private DeleteBankUserUseCase deleteBankUserUseCase;
 
     BankResource controller;
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase, deleteBankUserUseCase);
     }
 
     @Test
@@ -113,9 +119,6 @@ public class BankResourceTest {
         assertEquals(400, response.getStatusCodeValue());
     }
 
-
-
-
     @Test
     void shouldReturnListOfUserBankWithSucessful(){
 
@@ -148,13 +151,58 @@ public class BankResourceTest {
     @Test
     void shouldReturnNotFoundWhenBankUserIsNotFoundWithSucessful(){
 
-
         when(this.findUsersBankByUserDocumentUseCase.execute(anyString())).thenReturn(List.of());
-
 
         ResponseEntity<List<BankUserRestModel>> response = this.controller.findUsersBankByUser("teste@teste.com");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
 
     }
+
+    @Test
+    void shouldDeleteBankUserSucessfuly() {
+        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
+        dto.setBankUserId("testId");
+
+        ResponseEntity<String> response = this.controller.deleteBankUser(dto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenThrowsException() {
+        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
+        dto.setBankUserId("testId");
+
+        doThrow(BankUserNotFoundException.class).when(this.deleteBankUserUseCase).execute(dto);
+
+        ResponseEntity<String> response = this.controller.deleteBankUser(dto);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenThrowsException() {
+        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
+        dto.setBankUserId("testId");
+
+        doThrow(InvalidBankUserIdException.class).when(this.deleteBankUserUseCase).execute(dto);
+
+        ResponseEntity<String> response = this.controller.deleteBankUser(dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorWhenThrowsException() {
+        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
+        dto.setBankUserId("testId");
+
+        doThrow(RuntimeException.class).when(this.deleteBankUserUseCase).execute(dto);
+
+        ResponseEntity<String> response = this.controller.deleteBankUser(dto);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+    
 }

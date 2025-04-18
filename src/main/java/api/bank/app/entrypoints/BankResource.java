@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.DeleteBankUserRequestDTO;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 
 public interface BankResource {
@@ -13,4 +14,5 @@ public interface BankResource {
 
     ResponseEntity<List<BankUserRestModel>> findUsersBankByUser(String idUser);
     
+    ResponseEntity<String> deleteBankUser(DeleteBankUserRequestDTO dto);
 }
