@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.exception.BankUserNotFoundException;
-import api.bank.app.exception.InvalidBankUserIdException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
-import api.bank.app.restmodel.DeleteBankUserRequestDTO;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.DeleteBankUserUseCase;
@@ -88,16 +86,14 @@ public class BankController implements BankResource {
 
 
     @Override
-    @DeleteMapping
-    public ResponseEntity<String> deleteBankUser(@RequestBody DeleteBankUserRequestDTO dto) {
+    @DeleteMapping("/{bankUserId}")
+    public ResponseEntity<String> deleteBankUser(@PathVariable String bankUserId) {
         try {
-            this.deleteBankUserUseCase.execute(dto);
+            this.deleteBankUserUseCase.execute(bankUserId);
 
             return ResponseEntity.ok().build();
         } catch (BankUserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Bank Account not found");
-        } catch (InvalidBankUserIdException e) {
-            return ResponseEntity.badRequest().body("The bank user ID is invalid.");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

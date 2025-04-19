@@ -12,8 +12,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import api.bank.app.exception.BankUserNotFoundException;
-import api.bank.app.exception.InvalidBankUserIdException;
-import api.bank.app.restmodel.DeleteBankUserRequestDTO;
 import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.service.DeleteBankUserService;
 
@@ -32,35 +30,23 @@ public class DeleteBankUserUseCaseTest {
 
     @Test
     void shouldDeleteBankSucessfuly() {
-        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
-        dto.setBankUserId("testId");
+        String bankUserId = "testId";
 
-        when(this.bankUserDataProvider.deleteBankUserById(dto.getBankUserId())).thenReturn(1);
+        when(this.bankUserDataProvider.deleteBankUserById(bankUserId)).thenReturn(1);
 
-        this.deleteBankUserUseCase.execute(dto);
+        this.deleteBankUserUseCase.execute(bankUserId);
 
         verify(this.bankUserDataProvider, times(1)).deleteBankUserById(anyString());
     }
 
-    @Test 
-    void shouldThrowInvalidBankUserIdExceptionWhenIdIsNullOrBlank() {
-        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
-        dto.setBankUserId(" ");
-
-        assertThrows(InvalidBankUserIdException.class, () -> 
-            this.deleteBankUserUseCase.execute(dto)
-        );
-    }
-
     @Test
     void shouldThrowBankUserNotFoundExceptionWhenUserDoesNotExist() {
-        DeleteBankUserRequestDTO dto = new DeleteBankUserRequestDTO();
-        dto.setBankUserId("nonExistingBankUser");
+        String bankUserId = "testId";
 
-        when(this.bankUserDataProvider.deleteBankUserById(dto.getBankUserId())).thenReturn(0);
+        when(this.bankUserDataProvider.deleteBankUserById(bankUserId)).thenReturn(0);
 
         assertThrows(BankUserNotFoundException.class, () -> 
-            this.deleteBankUserUseCase.execute(dto)
+            this.deleteBankUserUseCase.execute(bankUserId)
         );
     }
 }
