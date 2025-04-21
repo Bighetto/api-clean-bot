@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import api.bank.app.converter.BankUserModelToEntityConverter;
+import api.bank.app.exception.BankUserNotFoundException;
 import api.bank.app.model.BankUser;
 import api.bank.app.repository.BankUserRepository;
 import api.bank.domain.dataprovider.BankDataProvider;
@@ -45,5 +46,13 @@ public class BankUserProvider implements BankUserDataProvider {
     @Override
     public Boolean existsByLoginAndBankId(String login, String bankId) {
         return this.bankUserRepository.existsByLoginAndBankId(login, bankId);
+    }
+
+    @Override
+    public BankUserEntity findBankUserById(String id) {
+        return this.bankUserModelToEntityConverter.convertToEntity(
+            this.bankUserRepository.findById(id)
+                .orElseThrow(() -> new BankUserNotFoundException("Bank user not found"))
+        );
     }
 }

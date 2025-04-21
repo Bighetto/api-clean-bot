@@ -14,7 +14,7 @@ public class BankUserEntityToRestModelConverter extends ConvertCase<BankUserEnti
         return BankUserRestModel.builder()
         .id(entity.getId())
         .username(entity.getLogin())
-        .bankName(entity.getBankName())
+        .bankId(entity.getBankId())
         .nickname(entity.getNickname())
         .build();
     }

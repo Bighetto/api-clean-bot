@@ -23,11 +23,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
+import api.bank.app.exception.BankUserNotFoundException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.UpdateBankUserNicknameRequestDTO;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.bank.domain.usecase.UpdateBankUserNicknameUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
 import api.security.auth.app.security.SecurityConfig;
@@ -47,12 +50,14 @@ public class BankResourceTest {
     PasswordEncoder passwordEncoder;
     @Mock
     private ValidateUserBankV8UseCase validateUserBankV8UseCase;
+    @Mock
+    private UpdateBankUserNicknameUseCase updateBankUserNicknameUseCase;
 
     BankResource controller;
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase, updateBankUserNicknameUseCase);
     }
 
     @Test
@@ -113,23 +118,19 @@ public class BankResourceTest {
         assertEquals(400, response.getStatusCodeValue());
     }
 
-
-
-
     @Test
     void shouldReturnListOfUserBankWithSucessful(){
 
-        String userId = UUID.randomUUID().toString(); // cria um ID de teste
-
+        String userId = UUID.randomUUID().toString();
 
         BankUserEntity userEntity = new BankUserEntity();
-        userEntity.setBankName("v8");
+        userEntity.setBankId("v8");
         userEntity.setId(userId);
         userEntity.setLogin("teste");
         userEntity.setNickname("teste");
 
         BankUserRestModel restModel = new BankUserRestModel();
-        restModel.setBankName("v8");
+        restModel.setBankId("v8");
         restModel.setNickname("teste");
         restModel.setUsername("teste");
         restModel.setId(userId);
@@ -147,14 +148,70 @@ public class BankResourceTest {
 
     @Test
     void shouldReturnNotFoundWhenBankUserIsNotFoundWithSucessful(){
-
-
         when(this.findUsersBankByUserDocumentUseCase.execute(anyString())).thenReturn(List.of());
-
 
         ResponseEntity<List<BankUserRestModel>> response = this.controller.findUsersBankByUser("teste@teste.com");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
 
+    }
+
+    @Test
+    void shouldUpdateNicknameSucessfuly() {
+        UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
+        dto.setBankUserId("bankUserId");
+        dto.setNewNickname("newNickname");
+
+        ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenBankUserIdIsNull() {
+        UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
+        dto.setBankUserId(null);
+        dto.setNewNickname("newNickname");
+
+        ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenBankUserIdIsBlank() {
+        UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
+        dto.setBankUserId("");
+        dto.setNewNickname("newNickname");
+
+        ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBankUserNotFound() {
+        UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
+        dto.setBankUserId("bankUserId");
+        dto.setNewNickname("newNickname");
+
+        doThrow(BankUserNotFoundException.class).when(this.updateBankUserNicknameUseCase).execute(dto.getBankUserId(), dto.getNewNickname());
+
+        ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorWhenThrowsException() {
+        UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
+        dto.setBankUserId("bankUserId");
+        dto.setNewNickname("newNickname");
+
+        doThrow(RuntimeException.class).when(this.updateBankUserNicknameUseCase).execute(dto.getBankUserId(), dto.getNewNickname());
+
+        ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 }
