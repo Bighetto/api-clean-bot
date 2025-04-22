@@ -81,7 +81,7 @@ public class BankUserDataProviderTest {
         bankUser.setPassword("teste");
 
         BankUserEntity entity = new BankUserEntity();
-        entity.setBankId("v8");
+        entity.setBankName("v8");
         entity.setId(UUID.randomUUID().toString());
         entity.setLogin("teste");
 
@@ -92,7 +92,7 @@ public class BankUserDataProviderTest {
         List<BankUserEntity> result = this.bankUserDataProvider.findUsersBankByUser(userLogin);
 
         assertEquals(1, result.size());
-        assertEquals("v8", result.get(0).getBankId());
+        assertEquals("v8", result.get(0).getBankName());
        
     }
 
@@ -112,17 +112,17 @@ public class BankUserDataProviderTest {
     @Test
     void shouldReturnBankUserEntity() {
         BankUser bankUser = new BankUser();
-        bankUser.setId("bankId");
+        bankUser.setId("bankName");
 
         BankUserEntity bankUserEntity = new BankUserEntity();
-        bankUserEntity.setBankId("bankId");
+        bankUserEntity.setBankName("bankName");
 
-        when(this.bankUserRepository.findById("bankId")).thenReturn(Optional.of(bankUser));
+        when(this.bankUserRepository.findById("bankName")).thenReturn(Optional.of(bankUser));
         when(this.bankUserModelToEntityConverter.convertToEntity(any())).thenReturn(bankUserEntity);
 
-        BankUserEntity response = this.bankUserDataProvider.findBankUserById("bankId");
+        BankUserEntity response = this.bankUserDataProvider.findBankUserById("bankName");
 
-        assertEquals(bankUserEntity.getBankId(), response.getBankId());
+        assertEquals(bankUserEntity.getBankName(), response.getBankName());
         verify(bankUserRepository, times(1)).findById(any());
     }
 

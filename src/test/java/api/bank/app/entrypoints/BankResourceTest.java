@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.exception.BankUserNotFoundException;
+import api.bank.app.exception.InvalidDataException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
 import api.bank.app.restmodel.UpdateBankUserNicknameRequestDTO;
@@ -124,13 +125,13 @@ public class BankResourceTest {
         String userId = UUID.randomUUID().toString();
 
         BankUserEntity userEntity = new BankUserEntity();
-        userEntity.setBankId("v8");
+        userEntity.setBankName("v8");
         userEntity.setId(userId);
         userEntity.setLogin("teste");
         userEntity.setNickname("teste");
 
         BankUserRestModel restModel = new BankUserRestModel();
-        restModel.setBankId("v8");
+        restModel.setBankName("v8");
         restModel.setNickname("teste");
         restModel.setUsername("teste");
         restModel.setId(userId);
@@ -173,6 +174,8 @@ public class BankResourceTest {
         dto.setBankUserId(null);
         dto.setNewNickname("newNickname");
 
+        doThrow(InvalidDataException.class).when(this.updateBankUserNicknameUseCase).execute(dto.getBankUserId(), dto.getNewNickname());
+
         ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -183,6 +186,8 @@ public class BankResourceTest {
         UpdateBankUserNicknameRequestDTO dto = new UpdateBankUserNicknameRequestDTO();
         dto.setBankUserId("");
         dto.setNewNickname("newNickname");
+
+        doThrow(InvalidDataException.class).when(this.updateBankUserNicknameUseCase).execute(dto.getBankUserId(), dto.getNewNickname());
 
         ResponseEntity<String> response = this.controller.updateBankUserNickname(dto);
 

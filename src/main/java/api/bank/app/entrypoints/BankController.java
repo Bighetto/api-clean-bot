@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.exception.BankUserNotFoundException;
+import api.bank.app.exception.InvalidDataException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
 import api.bank.app.restmodel.UpdateBankUserNicknameRequestDTO;
@@ -87,21 +88,14 @@ public class BankController implements BankResource {
     @Override
     @PutMapping
     public ResponseEntity<String> updateBankUserNickname(@RequestBody UpdateBankUserNicknameRequestDTO dto) {
-        
-        if (dto.getBankUserId() == null || dto.getBankUserId().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("BankUserId must not be null or blank");
-        }
-
-        if (dto.getNewNickname() == null || dto.getNewNickname().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New nickname must not be null or blank");
-        }
-        
         try {
             this.updateBankUserNicknameUseCase.execute(dto.getBankUserId(), dto.getNewNickname());
 
             return ResponseEntity.ok().build();
         } catch (BankUserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (InvalidDataException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

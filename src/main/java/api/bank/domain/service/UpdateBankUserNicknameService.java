@@ -3,6 +3,7 @@ package api.bank.domain.service;
 import org.springframework.stereotype.Component;
 
 import api.bank.app.converter.BankUserEntityToModelConverter;
+import api.bank.app.exception.InvalidDataException;
 import api.bank.app.model.BankUser;
 import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.entity.BankUserEntity;
@@ -18,6 +19,13 @@ public class UpdateBankUserNicknameService implements UpdateBankUserNicknameUseC
     
     @Override
     public void execute(String bankUserId, String newNickname) {
+        if (bankUserId == null || bankUserId.trim().isEmpty()) {
+            throw new InvalidDataException("BankUserId must not be null or blank");
+        }
+        if (newNickname == null || newNickname.trim().isEmpty()) {
+            throw new InvalidDataException("New nickname must not be null or blank");
+        }
+
         BankUserEntity bankUserEntity = this.bankUserDataProvider.findBankUserById(bankUserId);
 
         if (!newNickname.equals(bankUserEntity.getNickname())) {

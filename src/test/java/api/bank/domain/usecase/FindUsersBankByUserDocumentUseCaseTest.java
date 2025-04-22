@@ -37,7 +37,7 @@ public class FindUsersBankByUserDocumentUseCaseTest {
         UserEntity userEntity = new UserEntity();
 
         BankUserEntity bankUserentity = new BankUserEntity();
-        bankUserentity.setBankId("v8");
+        bankUserentity.setBankName("v8");
         bankUserentity.setId(UUID.randomUUID().toString());
 
         userEntity.setUserBanks(List.of(bankUserentity));

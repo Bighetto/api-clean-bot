@@ -13,6 +13,6 @@ public class BankUserRestModel {
 
     private String id;
     private String username;
-    private String bankId;
+    private String bankName;
     private String nickname;
 }
