@@ -13,4 +13,5 @@ public interface BankResource {
 
     ResponseEntity<List<BankUserRestModel>> findUsersBankByUser(String idUser);
     
+    ResponseEntity<String> deleteBankUser(String bankUserId);
 }
