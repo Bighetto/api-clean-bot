@@ -20,7 +20,7 @@ public class UserBankModelToEntityConverter extends ConvertCase<BankUserEntity, 
         
         return BankUserEntity.builder()
                 .id(model.getId())
-                .bankName(model.getBank().getName())
+                .bankId(model.getBank().getId())
                 .login(model.getLogin())
                 .password(model.getPassword())
                 .nickname(model.getNickname())

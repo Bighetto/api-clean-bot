@@ -13,7 +13,7 @@ public class BankUserEntity {
 
     private String id;
     private String userLoginId;
-    private String bankName;
+    private String bankId;
     private String login;
     private String password;
     private String nickname;

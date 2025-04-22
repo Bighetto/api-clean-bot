@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import api.bank.app.converter.BankUserModelToEntityConverter;
+import api.bank.app.exception.BankUserNotFoundException;
 import api.bank.app.model.BankUser;
 import api.bank.app.provider.BankUserProvider;
 import api.bank.app.repository.BankRepository;
@@ -59,7 +61,6 @@ public class BankUserDataProviderTest {
         bankUserDataProvider = new BankUserProvider(bankUserRepository, authDataProvider, bankDataProvider, bankUserModelToEntityConverter);
     }
 
-
     @Test
     void shouldUploadABankUserWithSucessfull() {
         BankUser bankUser = new BankUser();
@@ -80,7 +81,7 @@ public class BankUserDataProviderTest {
         bankUser.setPassword("teste");
 
         BankUserEntity entity = new BankUserEntity();
-        entity.setBankName("v8");
+        entity.setBankId("v8");
         entity.setId(UUID.randomUUID().toString());
         entity.setLogin("teste");
 
@@ -91,7 +92,7 @@ public class BankUserDataProviderTest {
         List<BankUserEntity> result = this.bankUserDataProvider.findUsersBankByUser(userLogin);
 
         assertEquals(1, result.size());
-        assertEquals("v8", result.get(0).getBankName());
+        assertEquals("v8", result.get(0).getBankId());
        
     }
 
@@ -106,5 +107,29 @@ public class BankUserDataProviderTest {
 
         verify(bankUserRepository, times(1)).findByUser(userLogin);
         verify(bankUserModelToEntityConverter, never()).convertToEntity(any());
+    }
+
+    @Test
+    void shouldReturnBankUserEntity() {
+        BankUser bankUser = new BankUser();
+        bankUser.setId("bankId");
+
+        BankUserEntity bankUserEntity = new BankUserEntity();
+        bankUserEntity.setBankId("bankId");
+
+        when(this.bankUserRepository.findById("bankId")).thenReturn(Optional.of(bankUser));
+        when(this.bankUserModelToEntityConverter.convertToEntity(any())).thenReturn(bankUserEntity);
+
+        BankUserEntity response = this.bankUserDataProvider.findBankUserById("bankId");
+
+        assertEquals(bankUserEntity.getBankId(), response.getBankId());
+        verify(bankUserRepository, times(1)).findById(any());
+    }
+
+    @Test
+    void shouldThrowsBankUserNotFoundException() {
+        assertThrows(BankUserNotFoundException.class, () ->
+            this.bankUserDataProvider.findBankUserById("null")
+        );
     }
 }
