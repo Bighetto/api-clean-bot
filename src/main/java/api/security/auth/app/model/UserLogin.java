@@ -24,14 +24,18 @@ import java.util.List;
 @NoArgsConstructor
 public class UserLogin implements UserDetails {
 
-    @Id
     private String document;
 
     private String name;
+    
+    @Id
+    @Column(unique = true)
     private String email;
+    
     private String phoneNumber;
     private String tipo;
     private String password;
+    
 
     @Column(updatable = false)
     private LocalDateTime registerDate = LocalDateTime.now();
