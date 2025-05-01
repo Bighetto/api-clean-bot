@@ -105,6 +105,8 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                 dto.setBalancePeriods(newBalancePeriods);
                 dto.setBalanceId(balanceId);
                 dto.setBooleanValue(true);
+                
+                break;
 
             } catch (HttpClientErrorException  e) {
 
@@ -165,9 +167,9 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                         throw new ConsultV8CustomerBalanceException("Error processing server response from V8Bank");
                     }
 
-                } catch (JsonMappingException e1) {
+                } catch (JsonMappingException exception) {
                     throw new ConsultV8CustomerBalanceException("Error mapping Json");
-                } catch (JsonProcessingException e1) {
+                } catch (JsonProcessingException exception) {
                     throw new ConsultV8CustomerBalanceException("Error processing Json");
                 }
     

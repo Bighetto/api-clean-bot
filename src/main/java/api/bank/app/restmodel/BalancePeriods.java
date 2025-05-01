@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BalancePeriods {
 
-    private Double amount;
+    private Double totalAmount;
     private String dueDate;
 }

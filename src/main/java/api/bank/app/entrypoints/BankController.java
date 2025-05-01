@@ -13,16 +13,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import api.bank.app.converter.BankUserEntityToRestModelConverter;
 import api.bank.app.exception.BankUserAlreadyExistsException;
 import api.bank.app.exception.BankUserNotFoundException;
 import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
+import api.bank.app.restmodel.ConsultV8CustomerBalanceResponse;
+import api.bank.app.restmodel.SimulateTest;
+import api.bank.app.restmodel.TestRequestDTO;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
+import api.bank.domain.usecase.ConsultV8CustomerBalanceUseCase;
+import api.bank.domain.usecase.CreateRestTemplateSessionUseCase;
 import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
+import api.bank.domain.usecase.SimulateV8CustomerUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
 import api.security.auth.app.security.SecurityConfig;
@@ -40,6 +47,9 @@ public class BankController implements BankResource {
     private final SecurityConfig securityConfig;
     private final ValidateUserBankV8UseCase validateUserBankV8UseCase;
     private final DeleteBankUserUseCase deleteBankUserUseCase;
+    private final ConsultV8CustomerBalanceUseCase consultV8CustomerBalanceUseCase;
+    private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
+    private final SimulateV8CustomerUseCase simulateV8CustomerUseCase;
 
     @Override
     @PostMapping
@@ -97,5 +107,25 @@ public class BankController implements BankResource {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/teste")
+    public ResponseEntity<ConsultV8CustomerBalanceResponse> test(@RequestBody TestRequestDTO dto) {
+        
+        RestTemplate session = this.createRestTemplateSessionUseCase.execute();
+
+        ConsultV8CustomerBalanceResponse response = this.consultV8CustomerBalanceUseCase.execute(session, dto.token(), dto.cpf());
+        
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("/teste2")
+    public ResponseEntity<Object> test2(@RequestBody SimulateTest dto) {
+        
+        RestTemplate session = this.createRestTemplateSessionUseCase.execute();
+
+        Object response = this.simulateV8CustomerUseCase.execute(session, dto.token(), dto.response(), dto.cpf(), dto.balanceId());
+        
+        return ResponseEntity.ok().body(response);
     }
 }
