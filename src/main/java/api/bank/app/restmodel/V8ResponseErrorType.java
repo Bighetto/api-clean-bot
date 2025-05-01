@@ -1,5 +1,7 @@
 package api.bank.app.restmodel;
 
+import api.bank.app.exception.V8ResponseErrorTypeException;
+
 public enum V8ResponseErrorType {
 
     VALUES_MUST_HAVE_AT_LEAST_ONE_VALUE("values() must be called with at least one value"),
@@ -31,6 +33,6 @@ public enum V8ResponseErrorType {
                 return type;
             }
         }
-        throw new RuntimeException();
+        throw new V8ResponseErrorTypeException("Error formating error message to error type");
     }
 }

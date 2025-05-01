@@ -104,7 +104,7 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
 
                 dto.setBalancePeriods(newBalancePeriods);
                 dto.setBalanceId(balanceId);
-                dto.setBooleanValue(true);
+                dto.setValidCustomer(true);
                 
                 break;
 
@@ -188,13 +188,13 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
     private void setNoBalance(ConsultV8CustomerBalanceResponse dto) {
         dto.setBalancePeriods("SEM SALDO");
         dto.setBalanceId(null);
-        dto.setBooleanValue(true);
+        dto.setValidCustomer(true);
     }
 
     private void setNotAuthorized(ConsultV8CustomerBalanceResponse dto) {
         dto.setBalancePeriods("NÃO AUTORIZADO");
         dto.setBalanceId(null);
-        dto.setBooleanValue(false);
+        dto.setValidCustomer(false);
     }
 
     private void sleepAndRetry() {

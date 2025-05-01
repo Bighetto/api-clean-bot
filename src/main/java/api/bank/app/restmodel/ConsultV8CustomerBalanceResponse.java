@@ -11,5 +11,5 @@ public class ConsultV8CustomerBalanceResponse {
 
     private Object balancePeriods;
     private String balanceId;
-    private Boolean booleanValue;
+    private Boolean validCustomer;
 }

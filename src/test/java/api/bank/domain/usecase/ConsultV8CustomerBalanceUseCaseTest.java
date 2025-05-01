@@ -70,7 +70,7 @@ public class ConsultV8CustomerBalanceUseCaseTest {
 
         assertNotNull(result);
         assertEquals("balance-123", result.getBalanceId());
-        assertTrue(result.getBooleanValue());
+        assertTrue(result.getValidCustomer());
     }
 
     @Test
