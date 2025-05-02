@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
 
     private final V8BankConfigDataProvider v8BankDataProvider;
+    private final CreateRestTemplateSessionService createRestTemplateSessionService;
 
     @Override
     public void execute(UploadBankUserRequestRestModel requestRestModel) {
@@ -37,7 +38,7 @@ public class ValidateUserBankV8Service implements ValidateUserBankV8UseCase {
             v8BankRequestDTO.setGrantType(this.v8BankDataProvider.getGrantType());
             v8BankRequestDTO.setScope(this.v8BankDataProvider.getScope());
 
-            RestTemplate restTemplate = new RestTemplate();
+            RestTemplate restTemplate = this.createRestTemplateSessionService.execute();
 
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("grant_type", v8BankRequestDTO.getGrantType());
