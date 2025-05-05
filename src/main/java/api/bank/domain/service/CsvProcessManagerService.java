@@ -1,14 +1,24 @@
 package api.bank.domain.service;
 
+import api.bank.app.model.BankUser;
 import api.bank.app.model.ConsultationEvents;
 import api.bank.app.repository.ConsultationEventsRepository;
+import api.bank.domain.dataprovider.BankUserDataProvider;
+import api.bank.domain.usecase.CreateRestTemplateSessionUseCase;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
+import api.bank.domain.usecase.ProcessRowUseCase;
+import api.security.auth.app.security.AESEncryptor;
+import api.security.auth.app.security.SecurityConfig;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.concurrent.*;
+
+import javax.naming.NameNotFoundException;
 
 @Component
 @AllArgsConstructor
@@ -17,6 +27,11 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
     private final Map<String, Future<?>> processos = new ConcurrentHashMap<>();
     private final ConsultationEventsRepository repository;
+    private final BankUserDataProvider bankUserDataProvider;
+    private final GetUserBankV8TokenUseCase getTokenUseCase;
+    private final ProcessRowUseCase processRowUseCase;
+    private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
+    private final AESEncryptor aesEncryptor;
 
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, LogSenderUseCase logSender) {
@@ -39,11 +54,23 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                     final List<ConsultationEvents> subLista = registros.subList(start, end);
                     final String usuario = usuarios.get(i);
 
+                    Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
+
+                    if (user.isEmpty()) throw new NameNotFoundException("Usuario nao encontrado.");
+
+                    String password = this.aesEncryptor.decrypt(user.get().getPassword());
+
+                    String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
+
+                    RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
+
                     executor.submit(() -> {
                         int processed = 0;
                         for (ConsultationEvents registro : subLista) {
                             if (Thread.currentThread().isInterrupted()) break;
 
+                            String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
+                            System.out.println(result);
                             logSender.enviarLog("[" + processoId + "][Usuário " + usuario + "] Processando: " + registro.getDocumentClient());
                             try {
                                 Thread.sleep(2000);

@@ -26,9 +26,7 @@ import api.bank.app.repository.BankUserRepository;
 import api.bank.domain.entity.BankUserEntity;
 import api.security.auth.app.converter.UserModelToEntityConverter;
 import api.security.auth.app.model.UserLogin;
-import api.security.auth.app.provider.AuthProvider;
 import api.security.auth.app.repository.UserRepository;
-import api.security.auth.domain.dataprovider.AuthDataProvider;
 
 @ExtendWith(MockitoExtension.class)
 public class BankUserDataProviderTest {
@@ -46,17 +44,13 @@ public class BankUserDataProviderTest {
     @Mock
     private UserModelToEntityConverter userModelToEntityConverter;
 
-    private AuthDataProvider authDataProvider;
-    private BankDataProvider bankDataProvider;
-
     
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        authDataProvider = new AuthProvider(userRepository, userModelToEntityConverter);
-        bankUserDataProvider = new BankUserProvider(bankUserRepository, authDataProvider, bankDataProvider, bankUserModelToEntityConverter);
+        bankUserDataProvider = new BankUserProvider(bankUserRepository, bankUserModelToEntityConverter);
     }
 
 

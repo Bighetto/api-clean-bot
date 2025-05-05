@@ -32,7 +32,7 @@ import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
-import api.security.auth.app.security.SecurityConfig;
+import api.security.auth.app.security.AESEncryptor;
 
 @ExtendWith(MockitoExtension.class)
 public class BankResourceTest {
@@ -44,7 +44,7 @@ public class BankResourceTest {
     @Mock
     private UploadBankUserUseCase uploadBankUserUseCase;
     @Mock
-    private SecurityConfig securityConfig; 
+    private AESEncryptor aesEncryptor; 
     @Mock 
     PasswordEncoder passwordEncoder;
     @Mock
@@ -56,7 +56,7 @@ public class BankResourceTest {
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, securityConfig, validateUserBankV8UseCase, deleteBankUserUseCase);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, aesEncryptor, validateUserBankV8UseCase, deleteBankUserUseCase);
     }
 
     @Test
@@ -66,11 +66,8 @@ public class BankResourceTest {
         restModel.setPassword("testpassword");
         restModel.setBankName("testBankName");
 
-        String encryptedPassword = "encryptedPassword";
 
         doNothing().when(validateUserBankV8UseCase).execute(any());
-        when(passwordEncoder.encode(anyString())).thenReturn(encryptedPassword);
-        when(securityConfig.passwordEncoder()).thenReturn(passwordEncoder);
         doNothing().when(uploadBankUserUseCase).execute(any());
 
         try {
@@ -106,10 +103,7 @@ public class BankResourceTest {
         UploadBankUserRequestRestModel restModel = new UploadBankUserRequestRestModel();
         restModel.setLogin("invalidUser");
         restModel.setPassword("testpassword");
-        String encryptedPassword = "encryptedPassword";
 
-        when(passwordEncoder.encode(anyString())).thenReturn(encryptedPassword);
-        when(securityConfig.passwordEncoder()).thenReturn(passwordEncoder);
         doThrow(new BankUserAlreadyExistsException(null)).when(uploadBankUserUseCase).execute(any());
 
         ResponseEntity<String> response = controller.uploadBankUser(restModel);

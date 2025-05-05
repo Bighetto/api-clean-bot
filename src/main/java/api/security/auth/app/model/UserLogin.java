@@ -31,7 +31,7 @@ public class UserLogin implements UserDetails {
     private String email;
     private String phoneNumber;
     private String tipo;
-    private String password;
+    private String password;    
 
     @Column(updatable = false)
     private LocalDateTime registerDate = LocalDateTime.now();

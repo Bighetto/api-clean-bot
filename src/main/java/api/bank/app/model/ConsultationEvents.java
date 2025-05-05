@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import api.security.auth.app.model.UserLogin;
+
 @Table(name = "queries_tb")
 @Entity
 @Getter
@@ -28,4 +30,8 @@ public class ConsultationEvents {
 
     @Column(name = "insertion_date")
     private LocalDateTime insertionDate;
+
+    @Column(name = "user_document")
+    private String user;
+
 }

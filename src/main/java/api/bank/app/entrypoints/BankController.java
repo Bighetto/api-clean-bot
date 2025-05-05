@@ -25,7 +25,7 @@ import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
 import api.bank.domain.usecase.ValidateUserBankV8UseCase;
-import api.security.auth.app.security.SecurityConfig;
+import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
 @RequestMapping(value = "/bank")
@@ -37,7 +37,7 @@ public class BankController implements BankResource {
     private final FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
     private final UploadBankUserUseCase uploadBankUserUseCase;
-    private final SecurityConfig securityConfig;
+    private final AESEncryptor aesEncryptor;
     private final ValidateUserBankV8UseCase validateUserBankV8UseCase;
     private final DeleteBankUserUseCase deleteBankUserUseCase;
 
@@ -47,8 +47,8 @@ public class BankController implements BankResource {
         try {
             this.validateUserBankV8UseCase.execute(restModel);
 
-            String encryptPassword = this.securityConfig.passwordEncoder().encode(restModel.getPassword());
-            restModel.setPassword(encryptPassword);
+            String encryptedPassword = aesEncryptor.encrypt(restModel.getPassword());
+            restModel.setPassword(encryptedPassword);
 
             this.uploadBankUserUseCase.execute(restModel);
 
