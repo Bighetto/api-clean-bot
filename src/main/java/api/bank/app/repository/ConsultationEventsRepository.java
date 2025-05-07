@@ -10,6 +10,6 @@ import api.bank.app.model.ConsultationEvents;
 @Repository
 public interface ConsultationEventsRepository extends JpaRepository<ConsultationEvents, String> {
 
-    List<ConsultationEvents> findByCsvId(String csvId);
+    List<ConsultationEvents> findByCsvId_Id(String csvId);
 
 }

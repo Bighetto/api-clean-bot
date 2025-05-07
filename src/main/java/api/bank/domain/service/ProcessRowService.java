@@ -29,7 +29,7 @@ public class ProcessRowService implements ProcessRowUseCase {
             Object balanceData = response.getBalancePeriods();
 
             if ("NÃO AUTORIZADO".equals(balanceData) || "CPF INVÁLIDO".equals(balanceData)) {
-                return customerCPF + " -> " + balanceData;
+                return balanceData.toString();
             }
 
             if (!"SEM SALDO".equals(balanceData) && response.getBalanceId() != null) {
@@ -44,15 +44,15 @@ public class ProcessRowService implements ProcessRowUseCase {
                 );
 
                 if (simulationResult != null) {
-                    return customerCPF + " -> " + simulationResult;
+                    return simulationResult.toString();
                 }
             }
 
         } catch (Exception e) {
-            return customerCPF + " -> ERRO NA REQUISIÇÃO";
+            return "ERRO NA REQUISIÇÃO";
         }
 
-        return customerCPF + " -> SEM SALDO";
+        return "SEM SALDO";
     }
     
 }

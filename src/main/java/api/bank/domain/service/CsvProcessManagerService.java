@@ -39,7 +39,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
         Future<?> future = executor.submit(() -> {
             try {
-                List<ConsultationEvents> registros = repository.findByCsvId(csvId);
+                List<ConsultationEvents> registros = repository.findByCsvId_Id(csvId);
                 int total = registros.size();
                 int usuariosCount = usuarios.size();
                 int porUsuario = total / usuariosCount;
@@ -70,6 +70,10 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                             if (Thread.currentThread().isInterrupted()) break;
 
                             String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
+                            registro.setValueResult(result);
+
+                            repository.save(registro);
+
                             System.out.println(result);
                             logSender.enviarLog("[" + processoId + "][Usuário " + usuario + "] Processando: " + registro.getDocumentClient());
                             try {

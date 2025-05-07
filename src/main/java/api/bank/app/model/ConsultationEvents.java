@@ -4,9 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-
-import api.security.auth.app.model.UserLogin;
-
 @Table(name = "queries_tb")
 @Entity
 @Getter
@@ -25,8 +22,9 @@ public class ConsultationEvents {
     @Column(name = "value_result")
     private String valueResult;
 
-    @Column(name = "csv_id")
-    private String csvId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "csv_id", referencedColumnName = "id")
+    private Executor csvId;
 
     @Column(name = "insertion_date")
     private LocalDateTime insertionDate;

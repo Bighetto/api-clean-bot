@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import api.bank.app.enums.ProcessStatus;
 import api.bank.app.model.ConsultationEvents;
+import api.bank.app.model.Executor;
 import api.bank.app.repository.ConsultationEventsRepository;
+import api.bank.app.repository.ExecutorRepository;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
@@ -38,15 +41,26 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final CsvProcessManagerUseCase csvProcessManager;
     private final LogSenderUseCase logSender;
     private final SearchUserByEmailUseCase searchUserByEmailUseCase;
+    private final ExecutorRepository executorRepository;
 
     @Override
     @PostMapping("/upload")
     public ResponseEntity<String> uploadCsv(@RequestParam("file") MultipartFile file, @RequestHeader("email")String email) {
         try {
             String csvId = UUID.randomUUID().toString();
+            Executor executor = new Executor();
+            executor.setId(csvId); 
+            executor.setUserLogin(email);
+            executor.setProcessStatus(ProcessStatus.PENDENTE);
             LocalDateTime now = LocalDateTime.now();
 
             UserEntity user = this.searchUserByEmailUseCase.execute(email);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado.");
+            }
+
+            executorRepository.save(executor);
 
             List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
                     .lines()
@@ -54,7 +68,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                     .map(document -> {
                         ConsultationEvents ce = new ConsultationEvents();
                         ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
-                        ce.setCsvId(csvId);
+                        ce.setCsvId(executor);
                         ce.setInsertionDate(now);
                         ce.setValueResult(null); 
                         ce.setUser(user.getDocument());
