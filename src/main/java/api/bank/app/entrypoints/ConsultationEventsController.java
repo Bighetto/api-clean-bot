@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -86,6 +87,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
+    // @SendTo("/topic/ws-logs")
     @PostMapping("/executar")
     public ResponseEntity<String> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
         String processoId = csvProcessManager.iniciarProcessamento(

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/user/authenticate", "/user/create", "/user/recoverPassword/**", "/user/renewPassword/**" ).permitAll()
+                                .requestMatchers("/user/authenticate", "/user/create", "/user/recoverPassword/**", "/user/renewPassword/**" ,"/ws-logs" ).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) 

@@ -45,7 +45,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                 int porUsuario = total / usuariosCount;
                 int resto = total % usuariosCount;
 
-                logSender.enviarLog("[" + processoId + "] Início do processamento. Total de registros: " + total);
+                logSender.enviarLog("Início do processamento. Total de registros: " + total);
 
                 int start = 0;
                 for (int i = 0; i < usuariosCount; i++) {
@@ -75,7 +75,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                             repository.save(registro);
 
                             System.out.println(result);
-                            logSender.enviarLog("[" + processoId + "][Usuário " + usuario + "] Processando: " + registro.getDocumentClient());
+                            logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result);
                             try {
                                 Thread.sleep(2000);
                             } catch (InterruptedException e) {
@@ -85,7 +85,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                             processed++;
                         }
-                        logSender.enviarLog("[" + processoId + "][Usuário " + usuario + "] Finalizou " + processed + " registros.");
+                        logSender.enviarLog("Finalizou o processamento de " + processed + " registros.");
                     });
 
                     start = end;
