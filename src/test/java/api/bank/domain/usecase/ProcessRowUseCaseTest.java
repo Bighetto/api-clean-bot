@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 import api.bank.app.restmodel.BalancePeriods;
 import api.bank.app.restmodel.ConsultV8CustomerBalanceResponse;
-import api.bank.domain.dataprovider.V8BankConfigDataProvider;
 import api.bank.domain.service.ProcessRowService;
 
 public class ProcessRowUseCaseTest {
@@ -22,8 +21,6 @@ public class ProcessRowUseCaseTest {
     private ConsultV8CustomerBalanceUseCase consultUseCase;
     @Mock
     private SimulateV8CustomerUseCase simulateUseCase;
-    @Mock
-    private V8BankConfigDataProvider configDataProvider;
     
     private ProcessRowUseCase processRowUseCase;
 
@@ -34,7 +31,7 @@ public class ProcessRowUseCaseTest {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        processRowUseCase = new ProcessRowService(configDataProvider, consultUseCase, simulateUseCase);
+        processRowUseCase = new ProcessRowService(consultUseCase, simulateUseCase);
     }
 
     @Test

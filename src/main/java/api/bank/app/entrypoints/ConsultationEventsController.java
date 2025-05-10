@@ -34,7 +34,6 @@ import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.security.auth.domain.entity.UserEntity;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
-import jakarta.websocket.server.PathParam;
 import lombok.AllArgsConstructor;
 
 @RestController

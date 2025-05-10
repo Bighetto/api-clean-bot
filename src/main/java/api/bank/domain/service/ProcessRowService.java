@@ -7,7 +7,6 @@ import org.springframework.web.client.RestTemplate;
 
 import api.bank.app.restmodel.BalancePeriods;
 import api.bank.app.restmodel.ConsultV8CustomerBalanceResponse;
-import api.bank.domain.dataprovider.V8BankConfigDataProvider;
 import api.bank.domain.usecase.ConsultV8CustomerBalanceUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
 import api.bank.domain.usecase.SimulateV8CustomerUseCase;
@@ -17,7 +16,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ProcessRowService implements ProcessRowUseCase {
     
-    private final V8BankConfigDataProvider v8BankConfigDataProvider;
     private final ConsultV8CustomerBalanceUseCase consultV8CustomerBalanceUseCase;
     private final SimulateV8CustomerUseCase simulateV8CustomerUseCase;
 
