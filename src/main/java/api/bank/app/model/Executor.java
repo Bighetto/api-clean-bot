@@ -21,4 +21,7 @@ public class Executor {
     @Column(name = "process_status", nullable = false)
     @Enumerated(EnumType.STRING)
     private ProcessStatus processStatus;
+
+    @Column(name = "total_registered", nullable = true)
+    private Integer totalRegistered;
 }

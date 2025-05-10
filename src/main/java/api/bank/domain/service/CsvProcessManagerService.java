@@ -10,7 +10,6 @@ import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
 import api.security.auth.app.security.AESEncryptor;
-import api.security.auth.app.security.SecurityConfig;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -74,7 +73,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                             repository.save(registro);
 
-                            System.out.println(result);
                             logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result);
                             try {
                                 Thread.sleep(2000);

@@ -46,7 +46,7 @@ public class ProcessRowUseCaseTest {
         when(consultUseCase.execute(session, token, cpf)).thenReturn(response);
 
         String result = processRowUseCase.execute(session, token, cpf);
-        assertEquals(cpf + " -> NÃO AUTORIZADO", result);
+        assertEquals("NÃO AUTORIZADO", result);
     }
 
     @Test
@@ -58,7 +58,7 @@ public class ProcessRowUseCaseTest {
         when(consultUseCase.execute(session, token, cpf)).thenReturn(response);
 
         String result = processRowUseCase.execute(session, token, cpf);
-        assertEquals(cpf + " -> CPF INVÁLIDO", result);
+        assertEquals("CPF INVÁLIDO", result);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class ProcessRowUseCaseTest {
         when(simulateUseCase.execute(session, token, List.of(period), cpf, "balance123")).thenReturn(5000.0);
 
         String result = processRowUseCase.execute(session, token, cpf);
-        assertEquals(cpf + " -> 5000.0", result);
+        assertEquals("5000.0", result);
     }
 
     @Test
@@ -85,7 +85,7 @@ public class ProcessRowUseCaseTest {
         when(consultUseCase.execute(session, token, cpf)).thenReturn(response);
 
         String result = processRowUseCase.execute(session, token, cpf);
-        assertEquals(cpf + " -> SEM SALDO", result);
+        assertEquals("SEM SALDO", result);
     }
 
     @Test
@@ -93,6 +93,6 @@ public class ProcessRowUseCaseTest {
         when(consultUseCase.execute(session, token, cpf)).thenThrow(new RuntimeException("Erro simulado"));
 
         String result = processRowUseCase.execute(session, token, cpf);
-        assertEquals(cpf + " -> ERRO NA REQUISIÇÃO", result);
+        assertEquals("ERRO NA REQUISIÇÃO", result);
     }
 }
