@@ -13,8 +13,9 @@ import api.bank.app.model.ResultsCountProjection;
 @Repository
 public interface ConsultationEventsRepository extends JpaRepository<ConsultationEvents, String> {
 
-    List<ConsultationEvents> findByCsvId_Id(String csvId);
-
+  @Query("SELECT c FROM ConsultationEvents c WHERE c.csvId.id = :csvId AND (c.valueResult IS NULL OR c.valueResult = '')")
+  List<ConsultationEvents> findValidByCsvId(@Param("csvId") String csvId);
+  
     @Query(value = """
     SELECT
       COALESCE(total_consultas, 0) AS total_consultas,
