@@ -21,7 +21,7 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
 
   
     @Query(value = """
-    SELECT
+      SELECT
       COALESCE(total_consultas, 0) AS total_consultas,
       COALESCE(nao_autorizado, 0) AS nao_autorizado,
       COALESCE(erro, 0) AS erro,
@@ -33,11 +33,11 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
         SUM(CASE WHEN value_result = 'NÃO AUTORIZADO' THEN 1 ELSE 0 END) AS nao_autorizado,
         SUM(CASE WHEN value_result IN ('CPF INVÁLIDO', 'ERRO NA REQUISIÇÃO') THEN 1 ELSE 0 END) AS erro,
         SUM(CASE WHEN value_result = 'SEM SALDO' THEN 1 ELSE 0 END) AS sem_saldo,
-        SUM(CASE WHEN value_result REGEXP '^[0-9]+,[0-9]{2}$' THEN 1 ELSE 0 END) AS com_saldo
+        SUM(CASE WHEN value_result REGEXP '^[0-9]+\\.[0-9]{2}$' THEN 1 ELSE 0 END) AS com_saldo
       FROM queries_tb
       WHERE value_result != ''
         AND csv_id = :csvId
-    ) AS resultado
+    ) AS resultado;
     """, nativeQuery = true)
 ResultsCountProjection getResultsCounterByCsvId(@Param("csvId") String csvId);
 

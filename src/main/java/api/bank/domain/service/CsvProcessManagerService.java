@@ -35,9 +35,15 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final AESEncryptor aesEncryptor;
     private final ExecutorRepository executorRepository;
 
+    private final ConcurrentMap<String, List<Future<?>>> processosSubTasks = new ConcurrentHashMap<>();
+
+
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender) {
     String processoId = UUID.randomUUID().toString();
+
+    List<Future<?>> subtasksFutures = new CopyOnWriteArrayList<>();
+    processosSubTasks.put(processoId, subtasksFutures);
 
     Future<?> future = executor.submit(() -> {
         boolean processoCompletado = false;
@@ -55,6 +61,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
             int start = 0;
             for (int i = 0; i < usuariosCount; i++) {
+
                 int count = porUsuario + (i < resto ? 1 : 0);
                 int end = start + count;
                 final List<ConsultationEvents> subLista = registros.subList(start, end);
@@ -67,7 +74,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                 String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
                 RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
 
-                executor.submit(() -> {
+                Future<?> subtaskFuture  = executor.submit(() -> {
                     try {
                         int processed = 0;
                         for (ConsultationEvents registro : subLista) {
@@ -94,6 +101,8 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                     }
                 });
 
+                subtasksFutures.add(subtaskFuture);
+
                 start = end;
             }
 
@@ -107,6 +116,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                     logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
                 }
                 processos.remove(processoId);
+                processosSubTasks.remove(processoId);
             }).start();
 
             processoCompletado = true;
@@ -115,22 +125,35 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage(), email);
             executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
             processos.remove(processoId);
+            processosSubTasks.remove(processoId);
+
         }
     });
 
     processos.put(processoId, future);
     return processoId;
-}
-
+    }
 
     @Override
     public boolean pararProcessamento(String processoId) {
         Future<?> future = processos.get(processoId);
+        List<Future<?>> subtasks = processosSubTasks.get(processoId);
+
+        boolean cancelouPrincipal = false;
+        boolean cancelouSubtasks = true;
+
         if (future != null) {
-            future.cancel(true);
+            cancelouPrincipal = future.cancel(true);
             processos.remove(processoId);
-            return true;
         }
-        return false;
+
+        if (subtasks != null) {
+            for (Future<?> f : subtasks) {
+                cancelouSubtasks = cancelouSubtasks && f.cancel(true);
+            }
+            processosSubTasks.remove(processoId);
+        }
+
+        return cancelouPrincipal || cancelouSubtasks;
     }
 }

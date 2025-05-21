@@ -12,7 +12,7 @@ public interface ConsultationEventsResource {
 
     public ResponseEntity<Map<String, String>> uploadCsv(MultipartFile file, String email);
 
-    public ResponseEntity<String> processarCsv(ProcessamentoCsvRestModel request);
+    public ResponseEntity<Map<String,String>> processarCsv(ProcessamentoCsvRestModel request);
 
     public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email);
 
