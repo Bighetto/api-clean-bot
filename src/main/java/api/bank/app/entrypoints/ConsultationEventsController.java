@@ -100,6 +100,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         String processoId = csvProcessManager.iniciarProcessamento(
             request.getCsvId(),
             request.getUsuarios(),
+            request.getEmail(),
             logSender
         );
         return ResponseEntity.ok(processoId);

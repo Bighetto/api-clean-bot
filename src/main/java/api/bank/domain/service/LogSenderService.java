@@ -13,8 +13,8 @@ public class LogSenderService implements LogSenderUseCase {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
-    public void enviarLog(String mensagem) {
-        messagingTemplate.convertAndSend("/topic/logs", mensagem);
+    public void enviarLog(String mensagem, String username) {
+        messagingTemplate.convertAndSendToUser(username, "/queue/logs", mensagem);
     }
     
 }

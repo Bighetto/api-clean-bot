@@ -2,5 +2,5 @@ package api.bank.domain.usecase;
 
 public interface LogSenderUseCase {
     
-    public void enviarLog(String mensagem);
+    public void enviarLog(String mensagem, String username);
 }

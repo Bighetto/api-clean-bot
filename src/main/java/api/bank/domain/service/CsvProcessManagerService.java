@@ -36,7 +36,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final ExecutorRepository executorRepository;
 
     @Override
-    public String iniciarProcessamento(String csvId, List<String> usuarios, LogSenderUseCase logSender) {
+    public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender) {
     String processoId = UUID.randomUUID().toString();
 
     Future<?> future = executor.submit(() -> {
@@ -49,7 +49,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             int porUsuario = total / usuariosCount;
             int resto = total % usuariosCount;
 
-            logSender.enviarLog("Início do processamento. Total de registros: " + total);
+            logSender.enviarLog("Início do processamento. Total de registros: " + total, email);
 
             CountDownLatch latch = new CountDownLatch(usuariosCount);
 
@@ -77,7 +77,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                             registro.setValueResult(result);
                             repository.save(registro);
 
-                            logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result);
+                            logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result, email);
 
                             try {
                                 Thread.sleep(2000);
@@ -88,7 +88,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                             processed++;
                         }
-                        logSender.enviarLog("Finalizou o processamento de " + processed + " registros.");
+                        logSender.enviarLog("Finalizou o processamento de " + processed + " registros.", email);
                     } finally {
                         latch.countDown();
                     }
@@ -101,10 +101,10 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                 try {
                     latch.await(); 
                     executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.ENCERRADO);
-                    logSender.enviarLog("Processamento concluído com sucesso!");
+                    logSender.enviarLog("Processamento concluído com sucesso!", email);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    logSender.enviarLog("Thread de atualização de status foi interrompida.");
+                    logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
                 }
                 processos.remove(processoId);
             }).start();
@@ -112,7 +112,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             processoCompletado = true;
 
         } catch (Exception e) {
-            logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage());
+            logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage(), email);
             executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
             processos.remove(processoId);
         }
