@@ -11,5 +11,6 @@ public class FindCsvStatusRestModel {
     
     private String idCsv;
     private String status;
+    private Integer quantidadeDocumentos;
     private ResultsCounterExecutionRestModel results;
 }

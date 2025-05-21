@@ -15,6 +15,10 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
 
   @Query("SELECT c FROM ConsultationEvents c WHERE c.csvId.id = :csvId AND (c.valueResult IS NULL OR c.valueResult = '')")
   List<ConsultationEvents> findValidByCsvId(@Param("csvId") String csvId);
+
+  @Query("SELECT COUNT(c) FROM ConsultationEvents c WHERE c.csvId.id = :csvId")
+  Integer findQuantityOfDocuments(@Param("csvId") String csvId);
+
   
     @Query(value = """
     SELECT

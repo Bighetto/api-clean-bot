@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,7 +51,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
     @Override
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadCsv(@RequestParam("file") MultipartFile file, @RequestHeader("email")String email) {
+    public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file, @RequestHeader("email")String email) {
         try {
             String csvId = UUID.randomUUID().toString();
             Executor executor = new Executor();
@@ -62,7 +63,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             UserEntity user = this.searchUserByEmailUseCase.execute(email);
 
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário não encontrado.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
             executorRepository.save(executor);
@@ -86,10 +87,10 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
             repository.saveAll(registros);
 
-            return ResponseEntity.ok(csvId);
+            return ResponseEntity.ok(Map.of("csvId", csvId));
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Erro ao processar o CSV: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -125,8 +126,11 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         }
 
         ResultsCountProjection result = this.repository.getResultsCounterByCsvId(currentStatus.get().getId());
+        Integer quantityDocuments = this.repository.findQuantityOfDocuments(currentStatus.get().getId());
+
 
         FindCsvStatusRestModel restModel = new FindCsvStatusRestModel();
+        restModel.setQuantidadeDocumentos(quantityDocuments);
         restModel.setIdCsv(currentStatus.get().getId());
         restModel.setStatus(currentStatus.get().getProcessStatus().toString());
 
