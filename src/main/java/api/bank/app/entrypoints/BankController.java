@@ -28,10 +28,10 @@ import api.bank.domain.usecase.ValidateUserBankV8UseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
+@RestController
 @RequestMapping(value = "/bank")
 @AllArgsConstructor
 @CrossOrigin
-@RestController
 public class BankController implements BankResource {
     
     private final FindUsersBankByUserDocumentUseCase findUsersBankByUserDocumentUseCase;
