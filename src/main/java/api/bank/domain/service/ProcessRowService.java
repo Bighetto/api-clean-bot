@@ -35,9 +35,10 @@ public class ProcessRowService implements ProcessRowUseCase {
 
         while (tentativa <= MAX_TENTATIVAS) {
             if (Thread.currentThread().isInterrupted()) {
-                Thread.currentThread().interrupt();
+                System.out.println("Thread interrompida antes da tentativa " + tentativa + ", saindo...");
                 return "PROCESSAMENTO INTERROMPIDO";
             }
+
             try {
                 String resultado = processar(session, acessToken, customerCPF);
                 System.out.println("Tentativa " + tentativa + ": " + resultado);
@@ -46,8 +47,10 @@ public class ProcessRowService implements ProcessRowUseCase {
                     if (tentativa == MAX_TENTATIVAS) {
                         return resultado;
                     }
-                    Thread.sleep(TEMPO_ESPERA_MS);
-                    if (Thread.currentThread().isInterrupted()) {
+                    try {
+                        Thread.sleep(TEMPO_ESPERA_MS);
+                    } catch (InterruptedException ie) {
+                        System.out.println("Thread interrompida durante sleep, saindo...");
                         Thread.currentThread().interrupt();
                         return "PROCESSAMENTO INTERROMPIDO";
                     }
@@ -59,7 +62,7 @@ public class ProcessRowService implements ProcessRowUseCase {
 
             } catch (Exception e) {
                 if (Thread.currentThread().isInterrupted()) {
-                    Thread.currentThread().interrupt();
+                    System.out.println("Thread interrompida após exceção, saindo...");
                     return "PROCESSAMENTO INTERROMPIDO";
                 }
                 System.out.println("Tentativa " + tentativa + " falhou com exceção: " + e.getMessage());
@@ -71,8 +74,9 @@ public class ProcessRowService implements ProcessRowUseCase {
                 try {
                     Thread.sleep(TEMPO_ESPERA_MS);
                 } catch (InterruptedException ie) {
+                    System.out.println("Thread interrompida durante sleep na exceção, saindo...");
                     Thread.currentThread().interrupt();
-                    return "ERRO INTERNO: Thread interrompida";
+                    return "PROCESSAMENTO INTERROMPIDO";
                 }
                 tentativa++;
             }
@@ -80,6 +84,7 @@ public class ProcessRowService implements ProcessRowUseCase {
 
         return "FALHA INDEFINIDA";
     }
+
     private boolean isErro(String resultado) {
         if (resultado == null) return true;
 

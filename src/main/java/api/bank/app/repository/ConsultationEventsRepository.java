@@ -3,12 +3,15 @@ package api.bank.app.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import api.bank.app.model.ConsultationEvents;
+import api.bank.app.model.Executor;
 import api.bank.app.model.ResultsCountProjection;
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface ConsultationEventsRepository extends JpaRepository<ConsultationEvents, String> {
@@ -39,7 +42,11 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
         AND csv_id = :csvId
     ) AS resultado;
     """, nativeQuery = true)
-ResultsCountProjection getResultsCounterByCsvId(@Param("csvId") String csvId);
+  ResultsCountProjection getResultsCounterByCsvId(@Param("csvId") String csvId);
 
-
+  @Modifying
+  @Transactional
+  @Query(value = """
+        delete from queries_tb where csv_id = :id """, nativeQuery = true)
+  void deleteByCsvId(@Param("id") String id);
 }

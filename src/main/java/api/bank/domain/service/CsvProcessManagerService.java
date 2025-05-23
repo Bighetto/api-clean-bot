@@ -78,7 +78,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                     try {
                         int processed = 0;
                         for (ConsultationEvents registro : subLista) {
-                            if (Thread.currentThread().isInterrupted()) break;
+                            if (Thread.currentThread().isInterrupted()) return;
 
                             String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
                             registro.setValueResult(result);
@@ -90,7 +90,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                 Thread.sleep(2000);
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
-                                break;
+                                return;
                             }
 
                             processed++;
@@ -148,12 +148,16 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         }
 
         if (subtasks != null) {
-            for (Future<?> f : subtasks) {
-                cancelouSubtasks = cancelouSubtasks && f.cancel(true);
+            for (Future<?> subtask : subtasks) {
+                if (subtask != null && !subtask.isDone()) {
+                    boolean cancelou = subtask.cancel(true);
+                    cancelouSubtasks = cancelouSubtasks && cancelou;
+                }
             }
             processosSubTasks.remove(processoId);
         }
 
-        return cancelouPrincipal || cancelouSubtasks;
+        return cancelouPrincipal && cancelouSubtasks;
     }
+
 }

@@ -24,4 +24,7 @@ public class Executor {
 
     @Column(name = "total_registered", nullable = true)
     private Integer totalRegistered;
+
+    @Column(name = "process_id", nullable = true)
+    private String processId;
 }

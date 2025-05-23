@@ -53,6 +53,14 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file, @RequestHeader("email")String email) {
         try {
+
+            Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
+
+            if (executorFind.isPresent()) {
+                repository.deleteByCsvId(executorFind.get().getId());
+                executorRepository.deleteById(executorFind.get().getId());
+            }
+
             String csvId = UUID.randomUUID().toString();
             Executor executor = new Executor();
             executor.setId(csvId); 
@@ -103,14 +111,31 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             request.getEmail(),
             logSender
         );
+
+        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
+
+        if (executor.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        executor.get().setProcessId(processoId);
+
+        this.executorRepository.save(executor.get());
+
         return ResponseEntity.ok(Map.of("processoId",processoId));
     }   
 
-    @PostMapping("/parar/{processoId}")
-    public ResponseEntity<String> pararProcessamento(@PathVariable String processoId) {
-        boolean parado = csvProcessManager.pararProcessamento(processoId);
+    @PostMapping("/parar/{email}")
+    public ResponseEntity<String> pararProcessamento(@PathVariable String email) {
+        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(email);
+        if (executor.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        boolean parado = csvProcessManager.pararProcessamento(executor.get().getProcessId());
+        
         if (parado) {
-            return ResponseEntity.ok("Processo " + processoId + " interrompido com sucesso.");
+            return ResponseEntity.ok("Processo interrompido com sucesso.");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo não encontrado ou já finalizado.");
         }
