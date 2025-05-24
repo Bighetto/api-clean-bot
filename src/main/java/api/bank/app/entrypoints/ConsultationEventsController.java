@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -171,6 +172,20 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         
         return ResponseEntity.ok().body(restModel);
 
+    }
+
+    @Override
+    @DeleteMapping(value = "/zerar-resultados/{email}")
+    public ResponseEntity<String> zerarResultados(@PathVariable("email") String email) {
+
+        Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
+
+            if (executorFind.isPresent()) {
+                repository.deleteByCsvId(executorFind.get().getId());
+                executorRepository.deleteById(executorFind.get().getId());
+            }
+
+        return ResponseEntity.ok().body("Dados zerados com sucesso");
     }
 
 
