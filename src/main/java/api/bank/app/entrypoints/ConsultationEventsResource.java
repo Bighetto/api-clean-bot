@@ -18,4 +18,6 @@ public interface ConsultationEventsResource {
 
     public ResponseEntity<String> zerarResultados(String email);
 
+    public ResponseEntity<byte[]> exportarResultados(String email);
+
 }

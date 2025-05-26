@@ -1,6 +1,8 @@
 package api.bank.app.entrypoints;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +35,7 @@ import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 import api.bank.app.restmodel.ResultsCounterExecutionRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.usecase.FileExportGenerationUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.security.auth.domain.entity.UserEntity;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
@@ -49,6 +52,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final LogSenderUseCase logSender;
     private final SearchUserByEmailUseCase searchUserByEmailUseCase;
     private final ExecutorRepository executorRepository;
+    private final FileExportGenerationUseCase fileExportGenerationUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -186,6 +190,40 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             }
 
         return ResponseEntity.ok().body("Dados zerados com sucesso");
+    }
+
+    @Override
+    @PostMapping("/export/{email}")
+    public ResponseEntity<byte[]> exportarResultados(@PathVariable("email") String email) {
+
+        Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
+
+        if (executorFind.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<ConsultationEvents> events = repository.findAllByCsvId(executorFind.get().getId());
+
+        List<String[]> data = events.stream()
+        .map(e -> new String[]{
+                e.getDocumentClient(),
+                e.getValueResult()
+        })
+        .toList();
+
+        String[] headers = {"Documento", "Resultado"};
+
+
+        try {
+            ByteArrayInputStream stream  = this.fileExportGenerationUseCase.execute(data, headers);
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=resultado-consultas.xlsx")
+                .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(bytes);
+        } catch (IOException e1) {
+            return ResponseEntity.internalServerError().build();
+        }
+
     }
 
 

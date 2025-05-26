@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import api.bank.app.model.ConsultationEvents;
-import api.bank.app.model.Executor;
 import api.bank.app.model.ResultsCountProjection;
 import jakarta.transaction.Transactional;
 
@@ -49,4 +48,8 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
   @Query(value = """
         delete from queries_tb where csv_id = :id """, nativeQuery = true)
   void deleteByCsvId(@Param("id") String id);
+
+  @Query(value = " SELECT * FROM queries_tb qt where csv_id = :csvId ", nativeQuery = true)
+  List<ConsultationEvents> findAllByCsvId(@Param("csvId")String csvId);
+
 }
