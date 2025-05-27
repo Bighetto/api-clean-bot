@@ -52,4 +52,7 @@ public interface ConsultationEventsRepository extends JpaRepository<Consultation
   @Query(value = " SELECT * FROM queries_tb qt where csv_id = :csvId ", nativeQuery = true)
   List<ConsultationEvents> findAllByCsvId(@Param("csvId")String csvId);
 
+  @Query(value = "select count(*) from queries_tb qt where value_result is null and csv_id = :csvId ", nativeQuery = true)
+  Integer countResultsNull(@Param("csvId") String csvId);
+
 }

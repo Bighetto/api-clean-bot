@@ -34,104 +34,114 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
     private final AESEncryptor aesEncryptor;
     private final ExecutorRepository executorRepository;
+    private final ConsultationEventsRepository eventsRepository;
 
     private final ConcurrentMap<String, List<Future<?>>> processosSubTasks = new ConcurrentHashMap<>();
 
-
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender) {
-    String processoId = UUID.randomUUID().toString();
 
-    List<Future<?>> subtasksFutures = new CopyOnWriteArrayList<>();
-    processosSubTasks.put(processoId, subtasksFutures);
+        String processoId = UUID.randomUUID().toString();
 
-    Future<?> future = executor.submit(() -> {
-        boolean processoCompletado = false;
+        List<Future<?>> subtasksFutures = new CopyOnWriteArrayList<>();
+        processosSubTasks.put(processoId, subtasksFutures);
 
-        try {
-            List<ConsultationEvents> registros = repository.findValidByCsvId(csvId);
-            int total = registros.size();
-            int usuariosCount = usuarios.size();
-            int porUsuario = total / usuariosCount;
-            int resto = total % usuariosCount;
+        executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
 
-            logSender.enviarLog("Início do processamento. Total de registros: " + total, email);
+        Future<?> future = executor.submit(() -> {
+            boolean processoCompletado = false;
 
-            CountDownLatch latch = new CountDownLatch(usuariosCount);
+            try {
+                List<ConsultationEvents> registros = repository.findValidByCsvId(csvId);
+                int total = registros.size();
+                int usuariosCount = usuarios.size();
+                int porUsuario = total / usuariosCount;
+                int resto = total % usuariosCount;
+                
 
-            int start = 0;
-            for (int i = 0; i < usuariosCount; i++) {
+                logSender.enviarLog("Início do processamento. Total de registros: " + total, email);
 
-                int count = porUsuario + (i < resto ? 1 : 0);
-                int end = start + count;
-                final List<ConsultationEvents> subLista = registros.subList(start, end);
-                final String usuario = usuarios.get(i);
+                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
 
-                Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
-                if (user.isEmpty()) throw new NameNotFoundException("Usuario nao encontrado.");
+                CountDownLatch latch = new CountDownLatch(usuariosCount);
 
-                String password = this.aesEncryptor.decrypt(user.get().getPassword());
-                String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
-                RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
+                int start = 0;
+                for (int i = 0; i < usuariosCount; i++) {
 
-                Future<?> subtaskFuture  = executor.submit(() -> {
-                    try {
-                        int processed = 0;
-                        for (ConsultationEvents registro : subLista) {
-                            if (Thread.currentThread().isInterrupted()) return;
+                    int count = porUsuario + (i < resto ? 1 : 0);
+                    int end = start + count;
+                    final List<ConsultationEvents> subLista = registros.subList(start, end);
+                    final String usuario = usuarios.get(i);
 
-                            String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
-                            registro.setValueResult(result);
-                            repository.save(registro);
+                    Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
+                    if (user.isEmpty()) throw new NameNotFoundException("Usuario nao encontrado.");
 
-                            logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result, email);
+                    String password = this.aesEncryptor.decrypt(user.get().getPassword());
+                    String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
+                    RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
 
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                return;
+                    Future<?> subtaskFuture  = executor.submit(() -> {
+                        try {
+                            int processed = 0;
+                            for (ConsultationEvents registro : subLista) {
+                                if (Thread.currentThread().isInterrupted()) return;
+
+                                String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
+                                registro.setValueResult(result);
+                                repository.save(registro);
+
+                                logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result, email);
+
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    return;
+                                }
+
+                                processed++;
                             }
-
-                            processed++;
+                            logSender.enviarLog("Finalizou o processamento de " + processed + " registros.", email);
+                        } finally {
+                            latch.countDown();
                         }
-                        logSender.enviarLog("Finalizou o processamento de " + processed + " registros.", email);
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                    });
 
-                subtasksFutures.add(subtaskFuture);
+                    subtasksFutures.add(subtaskFuture);
 
-                start = end;
-            }
-
-            new Thread(() -> {
-                try {
-                    latch.await(); 
-                    executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.ENCERRADO);
-                    logSender.enviarLog("Processamento concluído com sucesso!", email);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
+                    start = end;
                 }
-                processos.remove(processoId);
-                processosSubTasks.remove(processoId);
-            }).start();
 
-            processoCompletado = true;
+                new Thread(() -> {
+                    try {
+                        latch.await(); 
+                        Integer countEventsNull = this.eventsRepository.countResultsNull(csvId);
+                        if (countEventsNull > 0) {
+                            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.PENDENTE);
+                            logSender.enviarLog("Processamento pausado com sucesso!", email);
+                        }else{
+                            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.ENCERRADO);
+                            logSender.enviarLog("Processamento concluído com sucesso!", email);
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
+                    }
+                    limparProcesso(processoId, csvId);
+                }).start();
 
-        } catch (Exception e) {
-            logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage(), email);
-            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
-            processos.remove(processoId);
-            processosSubTasks.remove(processoId);
+                processoCompletado = true;
 
-        }
-    });
+            } catch (Exception e) {
+                logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage(), email);
+                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
+                limparProcesso(processoId, csvId);
 
-    processos.put(processoId, future);
-    return processoId;
+            }
+        });
+
+        processos.put(processoId, future);
+        return processoId;
     }
 
     @Override
@@ -158,6 +168,11 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         }
 
         return cancelouPrincipal && cancelouSubtasks;
+    }
+
+    private void limparProcesso(String processoId, String csvId) {
+        processos.remove(processoId);
+        processosSubTasks.remove(processoId);
     }
 
 }

@@ -110,24 +110,29 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     @Override
     @PostMapping("/executar")
     public ResponseEntity<Map<String,String>> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
-        String processoId = csvProcessManager.iniciarProcessamento(
+        try{
+
+        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
+
+        if (executor.isEmpty() || executor.get().getProcessStatus() == ProcessStatus.EM_ANDAMENTO) {
+            return ResponseEntity.badRequest().build();
+        }
+            String processoId = csvProcessManager.iniciarProcessamento(
             request.getCsvId(),
             request.getUsuarios(),
             request.getEmail(),
             logSender
         );
 
-        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
-
-        if (executor.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
         executor.get().setProcessId(processoId);
 
         this.executorRepository.save(executor.get());
 
         return ResponseEntity.ok(Map.of("processoId",processoId));
+        }catch(Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+        
     }   
 
     @PostMapping("/parar/{email}")
