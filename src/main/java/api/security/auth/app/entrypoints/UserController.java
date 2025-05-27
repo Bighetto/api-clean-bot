@@ -139,10 +139,11 @@ public class UserController implements UserResource {
             var nome = userDetails.getName();
             var email = userDetails.getEmail();
             var role = userDetails.getTipo();
+            var planName = userDetails.getPlan().getName();
     
             final String jwt = tokenService.generateToken(userDetails);
 
-            AuthenticationResponseRestModel responseRestModel = new AuthenticationResponseRestModel(email, nome, jwt, role);
+            AuthenticationResponseRestModel responseRestModel = new AuthenticationResponseRestModel(email, nome, jwt, role, planName);
     
             return ResponseEntity.ok(responseRestModel);
         } catch (Exception e) {
