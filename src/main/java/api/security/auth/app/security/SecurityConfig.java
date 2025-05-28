@@ -32,7 +32,7 @@ public class SecurityConfig {
         return http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "https://www.cleanbot.com.br"));
+                    configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200", "https://www.cleanbot.com.br", "https://www.app.cleanbot.com.br"));
                     configuration.setAllowedMethods(Arrays.asList("*"));
                     configuration.setAllowedHeaders(Arrays.asList("*"));
                     configuration.setAllowCredentials(true);
