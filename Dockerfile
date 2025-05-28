@@ -10,6 +10,11 @@ RUN mvn clean package -DskipTests
 
 FROM --platform=linux/amd64 openjdk:17-alpine
 
+RUN apk add --no-cache \
+    fontconfig \
+    ttf-dejavu \
+    ttf-freefont
+
 ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Djava.awt.headless=true"
 
 WORKDIR /usr/src/app
