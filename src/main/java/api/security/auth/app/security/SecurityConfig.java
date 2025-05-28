@@ -32,7 +32,7 @@ public class SecurityConfig {
         return http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+                    configuration.setAllowedOrigins(Arrays.asList("*"));
                     configuration.setAllowedMethods(Arrays.asList("*"));
                     configuration.setAllowedHeaders(Arrays.asList("*"));
                     configuration.setAllowCredentials(true);
@@ -46,7 +46,8 @@ public class SecurityConfig {
                                     "/user/create", 
                                     "/user/recoverPassword/**", 
                                     "/user/renewPassword/**" ,
-                                    "/ws-logs" ).permitAll()
+                                    "/ws-logs",
+                                    "/api/webhook/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) 
