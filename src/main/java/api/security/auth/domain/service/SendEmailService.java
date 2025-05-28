@@ -29,7 +29,7 @@ public class SendEmailService implements SendEmailUseCase {
             context.setVariable("nome", name);
             context.setVariable("email", to);
             context.setVariable("senha", password);
-            context.setVariable("portalLink", "https://www.google.com.br/");
+            context.setVariable("portalLink", "https://www.cleanbot.com.br/login");
 
             String htmlContent = templateEngine.process("welcome-email", context);
 
