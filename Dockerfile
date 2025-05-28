@@ -10,8 +10,10 @@ RUN mvn clean package -DskipTests
 
 FROM --platform=linux/amd64 openjdk:17-alpine
 
+ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Djava.awt.headless=true"
+
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/target/*.jar /usr/src/app/api-clean-bot.jar 
 
-CMD ["java", "-jar", "/usr/src/app/api-clean-bot.jar"]
+CMD ["java", "-Djava.awt.headless=true", "-jar", "/usr/src/app/api-clean-bot.jar"]
