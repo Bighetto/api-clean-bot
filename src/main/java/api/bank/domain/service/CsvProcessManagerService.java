@@ -13,6 +13,9 @@ import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -49,92 +52,99 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
 
         Future<?> future = executor.submit(() -> {
-            boolean processoCompletado = false;
+
+            int pageSize = 500;
+            int pageNumber = 0;
+            Page<ConsultationEvents> page;
+
 
             try {
-                List<ConsultationEvents> registros = repository.findValidByCsvId(csvId);
-                int total = registros.size();
-                int usuariosCount = usuarios.size();
-                int porUsuario = total / usuariosCount;
-                int resto = total % usuariosCount;
-                
-
-                logSender.enviarLog("Início do processamento. Total de registros: " + total, email);
-
+                logSender.enviarLog("Início do processamento.", email);
                 executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
 
-                CountDownLatch latch = new CountDownLatch(usuariosCount);
+                do{
+                    page = repository.findValidByCsvId(csvId, PageRequest.of(pageNumber, pageSize));
+                    List<ConsultationEvents> registros = page.getContent();
+                    int total = registros.size();
+                    int usuariosCount = usuarios.size();
+                    int porUsuario = total / usuariosCount;
+                    int resto = total % usuariosCount;
+                    
+                    CountDownLatch latch = new CountDownLatch(usuariosCount);
 
-                int start = 0;
-                for (int i = 0; i < usuariosCount; i++) {
+                    int start = 0;
+                    for (int i = 0; i < usuariosCount; i++) {
 
-                    int count = porUsuario + (i < resto ? 1 : 0);
-                    int end = start + count;
-                    final List<ConsultationEvents> subLista = registros.subList(start, end);
-                    final String usuario = usuarios.get(i);
+                        int count = porUsuario + (i < resto ? 1 : 0);
+                        int end = start + count;
 
-                    Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
-                    if (user.isEmpty()) throw new NameNotFoundException("Usuario nao encontrado.");
+                        if (start >= end) { latch.countDown(); continue; }
 
-                    String password = this.aesEncryptor.decrypt(user.get().getPassword());
-                    String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
-                    RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
+                        final List<ConsultationEvents> subLista = registros.subList(start, end);
+                        final String usuario = usuarios.get(i);
 
-                    Future<?> subtaskFuture  = executor.submit(() -> {
-                        try {
-                            int processed = 0;
-                            for (ConsultationEvents registro : subLista) {
-                                if (Thread.currentThread().isInterrupted()) return;
+                        Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
+                        if (user.isEmpty()) throw new NameNotFoundException("Usuario nao encontrado.");
 
-                                String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
-                                registro.setValueResult(result);
-                                repository.save(registro);
+                        String password = this.aesEncryptor.decrypt(user.get().getPassword());
+                        String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
+                        RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
 
-                                logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result, email);
+                        Future<?> subtaskFuture  = executor.submit(() -> {
+                            try {
+                                int processed = 0;
+                                for (ConsultationEvents registro : subLista) {
+                                    if (Thread.currentThread().isInterrupted()) return;
 
-                                try {
-                                    Thread.sleep(2000);
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                    return;
+                                    String result = this.processRowUseCase.execute(restTemplate, token, registro.getDocumentClient());
+                                    registro.setValueResult(result);
+                                    repository.save(registro);
+
+                                    logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient() + ". Resultado: " + result, email);
+
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                        return;
+                                    }
+
+                                    processed++;
                                 }
-
-                                processed++;
+                            } finally {
+                                latch.countDown();
                             }
-                            logSender.enviarLog("Finalizou o processamento de " + processed + " registros.", email);
-                        } finally {
-                            latch.countDown();
-                        }
-                    });
+                        });
 
-                    subtasksFutures.add(subtaskFuture);
+                        subtasksFutures.add(subtaskFuture);
 
-                    start = end;
-                }
-
-                new Thread(() -> {
-                    try {
-                        latch.await(); 
-                        Integer countEventsNull = this.eventsRepository.countResultsNull(csvId);
-                        if (countEventsNull > 0) {
-                            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.PENDENTE);
-                            logSender.enviarLog("Processamento pausado com sucesso!", email);
-                        }else{
-                            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.ENCERRADO);
-                            logSender.enviarLog("Processamento concluído com sucesso!", email);
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
+                        start = end;
                     }
-                    limparProcesso(processoId, csvId);
-                }).start();
+                    latch.await();
+                    pageNumber++;
+                    
+                }while(page.hasNext());
 
-                processoCompletado = true;
+                    new Thread(() -> {
+                        try {
+                            Integer countEventsNull = this.eventsRepository.countResultsNull(csvId);
+                            if (countEventsNull > 0) {
+                                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.PENDENTE);
+                                logSender.enviarLog("Processamento pausado com sucesso!", email);
+                            }else{
+                                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.ENCERRADO);
+                                logSender.enviarLog("Processamento concluído com sucesso!", email);
+                            }
+                        } catch (Exception e) {
+                            Thread.currentThread().interrupt();
+                            logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
+                        }
+                        limparProcesso(processoId, csvId);
+                    }).start();
 
             } catch (Exception e) {
-                logSender.enviarLog("[" + processoId + "] Erro no processamento: " + e.getMessage(), email);
-                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
+                logSender.enviarLog("Pausa no processamento.", email);
+                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.PENDENTE);
                 limparProcesso(processoId, csvId);
 
             }

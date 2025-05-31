@@ -2,6 +2,8 @@ package api.bank.app.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +18,7 @@ import jakarta.transaction.Transactional;
 public interface ConsultationEventsRepository extends JpaRepository<ConsultationEvents, String> {
 
   @Query("SELECT c FROM ConsultationEvents c WHERE c.csvId.id = :csvId AND (c.valueResult IS NULL OR c.valueResult = '')")
-  List<ConsultationEvents> findValidByCsvId(@Param("csvId") String csvId);
+  Page<ConsultationEvents> findValidByCsvId(@Param("csvId") String csvId, Pageable pageable);
 
   @Query("SELECT COUNT(c) FROM ConsultationEvents c WHERE c.csvId.id = :csvId")
   Integer findQuantityOfDocuments(@Param("csvId") String csvId);
