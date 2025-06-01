@@ -49,8 +49,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         List<Future<?>> subtasksFutures = new CopyOnWriteArrayList<>();
         processosSubTasks.put(processoId, subtasksFutures);
 
-        executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
-
         Future<?> future = executor.submit(() -> {
 
             int pageSize = 500;
@@ -59,8 +57,8 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
 
             try {
-                logSender.enviarLog("Início do processamento.", email);
                 executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
+                logSender.enviarLog("Início do processamento.", email);
 
                 do{
                     page = repository.findValidByCsvId(csvId, PageRequest.of(pageNumber, pageSize));
@@ -92,7 +90,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                         Future<?> subtaskFuture  = executor.submit(() -> {
                             try {
-                                int processed = 0;
                                 for (ConsultationEvents registro : subLista) {
                                     if (Thread.currentThread().isInterrupted()) return;
 
@@ -108,8 +105,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                         Thread.currentThread().interrupt();
                                         return;
                                     }
-
-                                    processed++;
                                 }
                             } finally {
                                 latch.countDown();

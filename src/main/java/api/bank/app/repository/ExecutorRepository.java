@@ -25,5 +25,11 @@ public interface ExecutorRepository extends JpaRepository<Executor, String>{
     @Modifying
     @Query(" UPDATE Executor e SET e.processStatus = :status WHERE e.id = :csvId ")
     void updateProcessStatusByCsvId(@Param("csvId") String csvId, @Param("status") ProcessStatus status);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Executor p SET p.processStatus = :statusPendente WHERE p.processStatus = :statusEmAndamento")
+    void updateAllStatusEmAndamentoToPendente(@Param("statusPendente") ProcessStatus statusPendente, @Param("statusEmAndamento") ProcessStatus statusEmAndamento);
+
     
 }
