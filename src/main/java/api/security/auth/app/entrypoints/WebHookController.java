@@ -110,7 +110,7 @@ public class WebHookController {
 
             String status = (String) payload.get("status");
 
-            if (!"canceled".equalsIgnoreCase(status)) {
+            if (!status.contains("canceled")) {
                 return ResponseEntity.ok("Status nao disponivel para essa operacao.");
             }
 
