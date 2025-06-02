@@ -44,7 +44,7 @@ public class WebHookController {
 
             String status = (String) payload.get("status");
 
-            if (!"authorized".equalsIgnoreCase(status)) {
+            if (!"authorized".equalsIgnoreCase(status) && !"uncanceled".equalsIgnoreCase(status)  ) {
                 return ResponseEntity.ok("Pagamento não autorizado. Usuário não será criado.");
             }
 
