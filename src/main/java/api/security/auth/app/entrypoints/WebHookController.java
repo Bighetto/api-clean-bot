@@ -50,9 +50,7 @@ public class WebHookController {
 
             Map<String, Object> urlParams = (Map<String, Object>) payload.getOrDefault("url_params", Map.of());
             Map<String, Object> queryParams = (Map<String, Object>) urlParams.getOrDefault("query_params", Map.of());
-            String code = (String) queryParams.get("code");
-
-            System.out.println("Evento recebido: " + code);
+           
 
             Map<String, Object> customer = (Map<String, Object>) payload.get("customer");
 
@@ -68,6 +66,8 @@ public class WebHookController {
             String number = phone != null ? (String) phone.getOrDefault("number", "") : "";
             String phoneNumber = ddi + ddd + number;
 
+            System.out.println("Evento recebido: " + email);
+
             UserEntity userEntity = this.searchUserByEmailUseCase.execute(email);
 
             if (userEntity != null) {
@@ -78,7 +78,7 @@ public class WebHookController {
 
             }else{
                 Map<String, Object> item = (Map<String, Object>) payload.get("item");
-                String offerCode = (String) item.get("offer_id");
+                String offerCode = (String) item.get("offer_code");
 
                 UserRestModel user = new UserRestModel(
                         document,
