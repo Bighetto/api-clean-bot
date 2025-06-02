@@ -15,4 +15,8 @@ public interface UserResource {
     ResponseEntity<String> recoverUserPassword(String email);
 
     ResponseEntity<String> renewUserPassword(String token, ChangeUserPasswordRequestDTO dto);
+
+    ResponseEntity<String> removeUser(String email);
+
+    ResponseEntity<String> inativateUser(String email);
 }

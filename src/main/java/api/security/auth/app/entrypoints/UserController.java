@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +33,9 @@ import api.security.auth.app.security.TokenService;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
 import api.security.auth.domain.entity.UserEntity;
 import api.security.auth.domain.enums.UserStatusEnum;
+import api.security.auth.domain.usecase.DeleteUserUseCase;
 import api.security.auth.domain.usecase.GenerateRecoveryTokenUseCase;
+import api.security.auth.domain.usecase.InativateUserUseCase;
 import api.security.auth.domain.usecase.RegisterNewUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
@@ -62,6 +65,8 @@ public class UserController implements UserResource {
     private final SendRecoverUserPasswordEmailUseCase sendRecoverUserPasswordEmailUseCase;
     private final ValidadeExpirationTokenUseCase validadeTokenUseCase;
     private final AESEncryptor aesEncryptor;
+    private final DeleteUserUseCase deleteUserUseCase;
+    private final InativateUserUseCase inativateUserUseCase;
 
 
     @Override
@@ -140,6 +145,10 @@ public class UserController implements UserResource {
             var email = userDetails.getEmail();
             var role = userDetails.getTipo();
             var planName = userDetails.getPlan().getName();
+            
+            if (userDetails.getStatus().equals(UserStatusEnum.INATIVO)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
     
             final String jwt = tokenService.generateToken(userDetails);
 
@@ -197,6 +206,29 @@ public class UserController implements UserResource {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @DeleteMapping(value = "/delete/{email}")
+    @Override
+    public ResponseEntity<String> removeUser(@PathVariable(value = "email") String email) {
+        
+        try{
+            this.deleteUserUseCase.execute(email);
+            return ResponseEntity.ok().body("Usuario deletado com sucesso!");
+        }catch(Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/inativate-user/{email}")    
+    @Override
+    public ResponseEntity<String> inativateUser(@PathVariable String email) {
+        try{
+            this.inativateUserUseCase.execute(email);
+            return ResponseEntity.ok().body("Usuario deletado com sucesso!");
+        }catch(Exception e){
+            return ResponseEntity.badRequest().build();
         }
     }
 }

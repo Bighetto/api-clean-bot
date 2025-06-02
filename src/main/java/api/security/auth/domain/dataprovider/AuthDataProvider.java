@@ -12,5 +12,11 @@ public interface AuthDataProvider {
     UserEntity findByEmail(String email);
 
     void updatePassword(String document, String password);
+
+    void deleteUserByEmail(String email);
+
+    void inativateUserByEmail(String email);
+
+    void ativateUserByEmail(String email);
     
 }

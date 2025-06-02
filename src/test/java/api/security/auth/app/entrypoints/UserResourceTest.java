@@ -28,7 +28,9 @@ import api.security.auth.app.security.SecurityConfig;
 import api.security.auth.app.security.TokenService;
 import api.security.auth.domain.entity.RecoveryTokenEntity;
 import api.security.auth.domain.entity.UserEntity;
+import api.security.auth.domain.usecase.DeleteUserUseCase;
 import api.security.auth.domain.usecase.GenerateRecoveryTokenUseCase;
+import api.security.auth.domain.usecase.InativateUserUseCase;
 import api.security.auth.domain.usecase.RegisterNewUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import api.security.auth.domain.usecase.SendEmailUseCase;
@@ -69,12 +71,32 @@ public class UserResourceTest {
     private AESEncryptor aesEncryptor;
     @Mock
     PasswordEncoder passwordEncoder;
+    @Mock
+    DeleteUserUseCase deleteUserUseCase;
+    @Mock
+    InativateUserUseCase inativateUserUseCase;
 
     UserResource controller;
 
     @BeforeEach
     void setup() {
-        controller = new UserController(searchUserByEmailUseCase, registerNewUserUseCase, userRestModelToEntityConverter, authenticationManager, tokenService, securityConfig, sendEmailUseCase, planDataProvider, planConverter, updatePasswordUserLoginUseCase, generateTokenUseCase, sendRecoverUserPasswordEmailUseCase, validadeTokenUseCase, aesEncryptor);
+        controller = new UserController(
+            searchUserByEmailUseCase, 
+            registerNewUserUseCase, 
+            userRestModelToEntityConverter, 
+            authenticationManager, 
+            tokenService, 
+            securityConfig, 
+            sendEmailUseCase, 
+            planDataProvider, 
+            planConverter, 
+            updatePasswordUserLoginUseCase, 
+            generateTokenUseCase, 
+            sendRecoverUserPasswordEmailUseCase, 
+            validadeTokenUseCase, 
+            aesEncryptor,
+            deleteUserUseCase,
+            inativateUserUseCase);
     }
 
     @Test

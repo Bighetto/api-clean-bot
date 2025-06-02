@@ -58,5 +58,22 @@ public class AuthProvider implements AuthDataProvider {
             throw new RuntimeException("User not found");
         }
     }
+
+    @Override
+    public void deleteUserByEmail(String email) {
+        
+        this.userRepository.deleteByEmail(email);
+    }
+
+    @Override
+    public void inativateUserByEmail(String email) {
+        
+        this.userRepository.setUserInactiveByEmail(email);
+    }
+
+    @Override
+    public void ativateUserByEmail(String email) {
+        this.userRepository.setUserActiveByEmail(email);
+    }
     
 }
