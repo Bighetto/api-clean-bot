@@ -35,7 +35,7 @@ public class SendRecoverUserPasswordEmailService implements SendRecoverUserPassw
             helper.setTo(to);
             helper.setSubject("Recuperação de senha");
             helper.setText(htmlContent, true);
-            helper.setFrom("routinelove36@gmail.com");
+            helper.setFrom("contato@cleanbot.com.br");
 
             mailSender.send(message);
         }catch(Exception e){

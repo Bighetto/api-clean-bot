@@ -29,14 +29,14 @@ public class SendEmailService implements SendEmailUseCase {
             context.setVariable("nome", name);
             context.setVariable("email", to);
             context.setVariable("senha", password);
-            context.setVariable("portalLink", "https://www.cleanbot.com.br/login");
+            context.setVariable("portalLink", "https://app.cleanbot.com.br/login");
 
             String htmlContent = templateEngine.process("welcome-email", context);
 
             helper.setTo(to);
             helper.setSubject("Bem vindo ao Portal");
             helper.setText(htmlContent, true);
-            helper.setFrom("routinelove36@gmail.com");
+            helper.setFrom("contato@cleanbot.com.br");
 
             mailSender.send(message);
         }catch(Exception e){
