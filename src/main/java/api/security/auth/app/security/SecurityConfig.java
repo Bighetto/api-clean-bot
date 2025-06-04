@@ -47,7 +47,8 @@ public class SecurityConfig {
                                     "/user/recoverPassword/**", 
                                     "/user/renewPassword/**" ,
                                     "/ws-logs",
-                                    "/api/webhook/**").permitAll()
+                                    "/api/webhook/**",
+                                    "/facebook/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) 
