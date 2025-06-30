@@ -79,26 +79,32 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
-            executorRepository.save(executor);
 
             List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
-                    .lines()
-                    .filter(line -> !line.trim().isEmpty())
-                    .map(document -> {
-                        ConsultationEvents ce = new ConsultationEvents();
-                        ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
-                        ce.setCsvId(executor);
-                        ce.setInsertionDate(now);
-                        ce.setValueResult(null); 
-                        ce.setUser(user.getDocument());
-                        return ce;
-                    })
-                    .collect(Collectors.toList());
+                .lines()
+                .parallel() // processamento em múltiplas threads
+                .filter(line -> !line.trim().isEmpty())
+                .map(document -> {
+                    ConsultationEvents ce = new ConsultationEvents();
+                    ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
+                    ce.setCsvId(executor);
+                    ce.setInsertionDate(now);
+                    ce.setValueResult(null);
+                    ce.setUser(user.getDocument());
+                    return ce;
+                })
+                .collect(Collectors.toList());
 
             executor.setTotalRegistered(registros.size());
+
             executorRepository.save(executor);
 
-            repository.saveAll(registros);
+            final int BATCH_SIZE = 1000;
+            for (int i = 0; i < registros.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, registros.size());
+                List<ConsultationEvents> batch = registros.subList(i, end);
+                repository.saveAll(batch);
+            }
 
             return ResponseEntity.ok(Map.of("csvId", csvId));
 
