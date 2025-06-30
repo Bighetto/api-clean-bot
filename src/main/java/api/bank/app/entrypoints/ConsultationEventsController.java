@@ -82,7 +82,6 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
             List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
                 .lines()
-                .parallel() // processamento em múltiplas threads
                 .filter(line -> !line.trim().isEmpty())
                 .map(document -> {
                     ConsultationEvents ce = new ConsultationEvents();
@@ -104,6 +103,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                 int end = Math.min(i + BATCH_SIZE, registros.size());
                 List<ConsultationEvents> batch = registros.subList(i, end);
                 repository.saveAll(batch);
+                repository.flush();
             }
 
             return ResponseEntity.ok(Map.of("csvId", csvId));
