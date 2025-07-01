@@ -28,7 +28,7 @@ import javax.naming.NameNotFoundException;
 @AllArgsConstructor
 public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(5);
+    private final ExecutorService executor = Executors.newFixedThreadPool(15);
     private final Map<String, Future<?>> processos = new ConcurrentHashMap<>();
     private final ConsultationEventsRepository repository;
     private final BankUserDataProvider bankUserDataProvider;
