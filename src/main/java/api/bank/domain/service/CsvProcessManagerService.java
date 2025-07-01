@@ -52,6 +52,9 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         List<Future<?>> subtasksFutures = new CopyOnWriteArrayList<>();
         processosSubTasks.put(processoId, subtasksFutures);
 
+        this.updateCsvIdProcessService.execute(csvId, processoId);
+        this.updateCsvStatusService.execute(csvId, ProcessStatus.EM_ANDAMENTO);
+
         Future<?> future = executor.submit(() -> {
 
             int pageSize = 500;
@@ -59,8 +62,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             Page<ConsultationEvents> page;
 
             try {
-                this.updateCsvIdProcessService.execute(csvId, processoId);
-                this.updateCsvStatusService.execute(csvId, ProcessStatus.EM_ANDAMENTO);
                 logSender.enviarLog("Início do processamento.", email);
 
                 do {
@@ -91,16 +92,15 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                         if (user.isEmpty())
                             throw new NameNotFoundException("Usuario nao encontrado.");
 
-                        String password = this.aesEncryptor.decrypt(user.get().getPassword());
-                        String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
-                        RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
-
                         Future<?> subtaskFuture = executor.submit(() -> {
                             try {
                                 for (ConsultationEvents registro : subLista) {
                                     if (Thread.currentThread().isInterrupted())
                                         return;
 
+                                    String password = this.aesEncryptor.decrypt(user.get().getPassword());
+                                    RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
+                                    String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
                                     String result = this.processRowUseCase.execute(restTemplate, token,
                                             registro.getDocumentClient());
                                     registro.setValueResult(result);
