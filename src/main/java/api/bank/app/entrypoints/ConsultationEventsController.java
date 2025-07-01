@@ -98,12 +98,11 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
             executorRepository.save(executor);
 
-            final int BATCH_SIZE = 1000;
+            final int BATCH_SIZE = 2000;
             for (int i = 0; i < registros.size(); i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, registros.size());
                 List<ConsultationEvents> batch = registros.subList(i, end);
                 repository.saveAll(batch);
-                repository.flush();
             }
 
             return ResponseEntity.ok(Map.of("csvId", csvId));
