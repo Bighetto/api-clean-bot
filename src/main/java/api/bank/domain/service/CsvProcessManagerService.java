@@ -54,10 +54,10 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             int pageSize = 500;
             int pageNumber = 0;
             Page<ConsultationEvents> page;
-            executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
+
 
             try {
-                
+                executorRepository.updateProcessStatusByCsvId(csvId, ProcessStatus.EM_ANDAMENTO);
                 logSender.enviarLog("Início do processamento.", email);
 
                 do{
