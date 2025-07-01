@@ -56,7 +56,8 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
     @Override
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file, @RequestHeader("email")String email) {
+    public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file,
+            @RequestHeader("email") String email) {
         try {
 
             Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
@@ -68,7 +69,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
             String csvId = UUID.randomUUID().toString();
             Executor executor = new Executor();
-            executor.setId(csvId); 
+            executor.setId(csvId);
             executor.setUserLogin(email);
             executor.setProcessStatus(ProcessStatus.PENDENTE);
             LocalDateTime now = LocalDateTime.now();
@@ -79,20 +80,19 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
 
-
             List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
-                .lines()
-                .filter(line -> !line.trim().isEmpty())
-                .map(document -> {
-                    ConsultationEvents ce = new ConsultationEvents();
-                    ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
-                    ce.setCsvId(executor);
-                    ce.setInsertionDate(now);
-                    ce.setValueResult(null);
-                    ce.setUser(user.getDocument());
-                    return ce;
-                })
-                .collect(Collectors.toList());
+                    .lines()
+                    .filter(line -> !line.trim().isEmpty())
+                    .map(document -> {
+                        ConsultationEvents ce = new ConsultationEvents();
+                        ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
+                        ce.setCsvId(executor);
+                        ce.setInsertionDate(now);
+                        ce.setValueResult(null);
+                        ce.setUser(user.getDocument());
+                        return ce;
+                    })
+                    .collect(Collectors.toList());
 
             executor.setTotalRegistered(registros.size());
 
@@ -114,31 +114,31 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
     @Override
     @PostMapping("/executar")
-    public ResponseEntity<Map<String,String>> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
-        try{
+    public ResponseEntity<Map<String, String>> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
+        try {
 
-        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
+            Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
 
-        if (executor.isEmpty() || executor.get().getProcessStatus() == ProcessStatus.EM_ANDAMENTO) {
-            return ResponseEntity.badRequest().build();
-        }
+            if (executor.isEmpty() || executor.get().getProcessStatus() == ProcessStatus.EM_ANDAMENTO) {
+                return ResponseEntity.badRequest().build();
+            }
             String processoId = csvProcessManager.iniciarProcessamento(
-            request.getCsvId(),
-            request.getUsuarios(),
-            request.getEmail(),
-            logSender
-        );
+                    request.getCsvId(),
+                    request.getUsuarios(),
+                    request.getEmail(),
+                    logSender);
 
-        executor.get().setProcessId(processoId);
+            executor.get().setProcessId(processoId);
+            executor.get().setProcessStatus(ProcessStatus.EM_ANDAMENTO);
 
-        this.executorRepository.save(executor.get());
+            this.executorRepository.save(executor.get());
 
-        return ResponseEntity.ok(Map.of("processoId",processoId));
-        }catch(Exception e){
+            return ResponseEntity.ok(Map.of("processoId", processoId));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
-        
-    }   
+
+    }
 
     @PostMapping("/parar/{email}")
     public ResponseEntity<String> pararProcessamento(@PathVariable String email) {
@@ -146,9 +146,9 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         if (executor.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        
+
         boolean parado = csvProcessManager.pararProcessamento(executor.get().getProcessId());
-        
+
         if (parado) {
             return ResponseEntity.ok("Processo interrompido com sucesso.");
         } else {
@@ -158,7 +158,8 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
     @Override
     @GetMapping("/status/{email}")
-    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(@PathVariable("email")String email) {
+    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(
+            @PathVariable("email") String email) {
 
         Optional<Executor> currentStatus = this.executorRepository.findCurrentProcessStatusByEmail(email);
 
@@ -168,7 +169,6 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
         ResultsCountProjection result = this.repository.getResultsCounterByCsvId(currentStatus.get().getId());
         Integer quantityDocuments = this.repository.findQuantityOfDocuments(currentStatus.get().getId());
-
 
         FindCsvStatusRestModel restModel = new FindCsvStatusRestModel();
         restModel.setQuantidadeDocumentos(quantityDocuments);
@@ -183,7 +183,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         resultsRestModel.setSem_saldo(result.getSem_saldo());
 
         restModel.setResults(resultsRestModel);
-        
+
         return ResponseEntity.ok().body(restModel);
 
     }
@@ -194,10 +194,10 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
         Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
 
-            if (executorFind.isPresent()) {
-                repository.deleteByCsvId(executorFind.get().getId());
-                executorRepository.deleteById(executorFind.get().getId());
-            }
+        if (executorFind.isPresent()) {
+            repository.deleteByCsvId(executorFind.get().getId());
+            executorRepository.deleteById(executorFind.get().getId());
+        }
 
         return ResponseEntity.ok().body("Dados zerados com sucesso");
     }
@@ -214,27 +214,25 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         List<ConsultationEvents> events = repository.findAllByCsvId(executorFind.get().getId());
 
         List<String[]> data = events.stream()
-        .map(e -> new String[]{
-                e.getDocumentClient(),
-                e.getValueResult()
-        })
-        .toList();
+                .map(e -> new String[] {
+                        e.getDocumentClient(),
+                        e.getValueResult()
+                })
+                .toList();
 
-        String[] headers = {"Documento", "Resultado"};
-
+        String[] headers = { "Documento", "Resultado" };
 
         try {
-            ByteArrayInputStream stream  = this.fileExportGenerationUseCase.execute(data, headers);
+            ByteArrayInputStream stream = this.fileExportGenerationUseCase.execute(data, headers);
             byte[] bytes = stream.readAllBytes();
             return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=resultado-consultas.xlsx")
-                .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                .body(bytes);
+                    .header("Content-Disposition", "attachment; filename=resultado-consultas.xlsx")
+                    .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    .body(bytes);
         } catch (IOException e1) {
             return ResponseEntity.internalServerError().build();
         }
 
     }
-
 
 }

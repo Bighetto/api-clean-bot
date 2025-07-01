@@ -13,6 +13,7 @@ import lombok.*;
 public class Executor {
 
     @Id
+    @Column(name = "id")
     private String id;
 
     @Column(name = "user_login", nullable = false)
