@@ -10,6 +10,8 @@ import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
+import api.bank.domain.usecase.UpdateCsvIdProcessUseCase;
+import api.bank.domain.usecase.UpdateCsvStatusUseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
@@ -36,7 +38,8 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
     private final AESEncryptor aesEncryptor;
     private final ConsultationEventsRepository eventsRepository;
-    private final UpdateCsvStatusService updateCsvStatusService;
+    private final UpdateCsvStatusUseCase updateCsvStatusService;
+    private final UpdateCsvIdProcessUseCase updateCsvIdProcessService;
 
     private final ConcurrentMap<String, List<Future<?>>> processosSubTasks = new ConcurrentHashMap<>();
 
@@ -56,6 +59,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             Page<ConsultationEvents> page;
 
             try {
+                this.updateCsvIdProcessService.execute(csvId, processoId);
                 this.updateCsvStatusService.execute(csvId, ProcessStatus.EM_ANDAMENTO);
                 logSender.enviarLog("Início do processamento.", email);
 

@@ -128,11 +128,6 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                     request.getEmail(),
                     logSender);
 
-            executor.get().setProcessId(processoId);
-            executor.get().setProcessStatus(ProcessStatus.EM_ANDAMENTO);
-
-            this.executorRepository.save(executor.get());
-
             return ResponseEntity.ok(Map.of("processoId", processoId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
