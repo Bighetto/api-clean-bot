@@ -85,7 +85,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                     .filter(line -> !line.trim().isEmpty())
                     .map(document -> {
                         ConsultationEvents ce = new ConsultationEvents();
-                        ce.setDocumentClient(document.replaceAll("[\".\\-\\s]", "").trim());
+                        ce.setDocumentClient(document.replaceAll("[.,;\\s-]", "").trim());
                         ce.setCsvId(executor);
                         ce.setInsertionDate(now);
                         ce.setValueResult(null);
