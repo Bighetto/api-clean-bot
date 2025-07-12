@@ -16,7 +16,6 @@ import api.security.auth.domain.usecase.ActivateUserUseCase;
 import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
 import lombok.AllArgsConstructor;
 
-
 @RestController
 @RequestMapping("/api/webhook/")
 @AllArgsConstructor
@@ -29,7 +28,6 @@ public class WebHookController {
 
     private final SearchUserByEmailUseCase searchUserByEmailUseCase;
     private final ActivateUserUseCase activateUserUseCase;
-
 
     @PostMapping
     public ResponseEntity<String> receiveAuthorized(@RequestBody Map<String, Object> payload) {
@@ -44,13 +42,12 @@ public class WebHookController {
 
             String status = (String) payload.get("status");
 
-            if (!"authorized".equalsIgnoreCase(status) && !"uncanceled".equalsIgnoreCase(status)  ) {
+            if (!"authorized".equalsIgnoreCase(status) && !"uncanceled".equalsIgnoreCase(status)) {
                 return ResponseEntity.ok("Pagamento não autorizado. Usuário não será criado.");
             }
 
             Map<String, Object> urlParams = (Map<String, Object>) payload.getOrDefault("url_params", Map.of());
             Map<String, Object> queryParams = (Map<String, Object>) urlParams.getOrDefault("query_params", Map.of());
-           
 
             Map<String, Object> customer = (Map<String, Object>) payload.get("customer");
 
@@ -71,12 +68,12 @@ public class WebHookController {
             UserEntity userEntity = this.searchUserByEmailUseCase.execute(email);
 
             if (userEntity != null) {
-                
+
                 this.activateUserUseCase.execute(userEntity.getEmail());
 
                 return ResponseEntity.ok().body("Usuario ativado com sucesso!");
 
-            }else{
+            } else {
                 Map<String, Object> item = (Map<String, Object>) payload.get("item");
                 String offerCode = (String) item.get("offer_code");
 
@@ -85,8 +82,7 @@ public class WebHookController {
                         name,
                         email,
                         phoneNumber,
-                        offerCode
-                );
+                        offerCode);
 
                 return userResource.registerUser(user);
             }
@@ -110,7 +106,7 @@ public class WebHookController {
 
             String status = (String) payload.get("status");
 
-            if (!status.contains("canceled")) {
+            if (!status.contains("canceled") || !status.contains("subscription_delayed")) {
                 return ResponseEntity.ok("Status nao disponivel para essa operacao.");
             }
 
