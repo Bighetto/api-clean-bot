@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import api.bank.app.model.ConsultationEvents;
+import api.bank.app.model.ResultsCountProjection;
 import api.bank.app.repository.ConsultationEventsRepository;
 import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
 import lombok.AllArgsConstructor;
@@ -23,5 +24,15 @@ public class ConsultationEventsProvider implements ConsultationEventsDataProvide
     @Override
     public void saveAll(List<ConsultationEvents> models) {
         this.consultationEventsRepository.saveAll(models);
+    }
+
+    @Override
+    public ResultsCountProjection getResultsCounterByCsvId(String executorId) {
+        return this.consultationEventsRepository.getResultsCounterByCsvId(executorId);
+    }
+
+    @Override
+    public Integer findQuantityOfDocuments(String executorId) {
+        return this.consultationEventsRepository.findQuantityOfDocuments(executorId);
     }
 }

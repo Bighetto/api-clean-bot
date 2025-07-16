@@ -20,17 +20,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import api.bank.app.converter.FindCsvStatusDTOToRestModelConverter;
 import api.bank.app.enums.ProcessStatus;
+import api.bank.app.exception.ExecutorNotFoundException;
 import api.bank.app.exception.UploadCsvExecption;
 import api.bank.app.model.ConsultationEvents;
 import api.bank.app.model.Executor;
-import api.bank.app.model.ResultsCountProjection;
 import api.bank.app.repository.ConsultationEventsRepository;
 import api.bank.app.repository.ExecutorRepository;
 import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
-import api.bank.app.restmodel.ResultsCounterExecutionRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.usecase.CsvStatusCheckerUseCase;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.FileExportGenerationUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
@@ -44,13 +45,15 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ConsultationEventsController implements ConsultationEventsResource {
 
-    private final ConsultationEventsRepository repository;
+    private final ConsultationEventsRepository consultationEventsRepository;
     private final CsvProcessManagerUseCase csvProcessManager;
     private final LogSenderUseCase logSender;
     private final ExecutorRepository executorRepository;
     private final FileExportGenerationUseCase fileExportGenerationUseCase;
     private final ProcessCsvUploadUseCase processCsvUploadUseCase;
     private final DeleteConsultationHistoryUseCase deleteConsultationHistoryUseCase;
+    private final CsvStatusCheckerUseCase csvStatusCheckerUseCase;
+    private final FindCsvStatusDTOToRestModelConverter findCsvStatusDTOToRestModelConverter;
 
     @Override
     @PostMapping("/upload")
@@ -109,35 +112,21 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @GetMapping("/status/{email}")
+    @GetMapping("/status")
     public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(
-            @PathVariable("email") String email) {
+            @RequestHeader("email") String email, 
+            @RequestHeader("bankId")String bankId) {
 
-        Optional<Executor> currentStatus = this.executorRepository.findCurrentProcessStatusByEmail(email);
-
-        if (currentStatus.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        ResultsCountProjection result = this.repository.getResultsCounterByCsvId(currentStatus.get().getId());
-        Integer quantityDocuments = this.repository.findQuantityOfDocuments(currentStatus.get().getId());
-
-        FindCsvStatusRestModel restModel = new FindCsvStatusRestModel();
-        restModel.setQuantidadeDocumentos(quantityDocuments);
-        restModel.setIdCsv(currentStatus.get().getId());
-        restModel.setStatus(currentStatus.get().getProcessStatus().toString());
-
-        ResultsCounterExecutionRestModel resultsRestModel = new ResultsCounterExecutionRestModel();
-        resultsRestModel.setTotal_consultas(result.getTotal_consultas());
-        resultsRestModel.setCom_saldo(result.getCom_saldo());
-        resultsRestModel.setErro(result.getErro());
-        resultsRestModel.setNao_autorizado(result.getNao_autorizado());
-        resultsRestModel.setSem_saldo(result.getSem_saldo());
-
-        restModel.setResults(resultsRestModel);
-
-        return ResponseEntity.ok().body(restModel);
-
+        try {
+            FindCsvStatusRestModel statusInfo = this.findCsvStatusDTOToRestModelConverter
+                .convertToModel(this.csvStatusCheckerUseCase.execute(email, bankId));
+            
+            return ResponseEntity.ok().body(statusInfo);    
+        } catch (ExecutorNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } 
     }
 
     @Override
@@ -168,7 +157,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         if (executorFind.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        List<ConsultationEvents> events = repository.findAllByCsvId(executorFind.get().getId());
+        List<ConsultationEvents> events = consultationEventsRepository.findAllByCsvId(executorFind.get().getId());
 
         List<String[]> data = events.stream()
                 .map(e -> new String[] {

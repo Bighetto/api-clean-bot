@@ -14,7 +14,7 @@ public interface ConsultationEventsResource {
 
     public ResponseEntity<Map<String,String>> processarCsv(ProcessamentoCsvRestModel request);
 
-    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email);
+    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email, String bankId);
 
     public ResponseEntity<String> zerarResultados(String email, String bankId);
 
