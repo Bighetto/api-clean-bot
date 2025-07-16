@@ -31,6 +31,7 @@ import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 import api.bank.app.restmodel.ResultsCounterExecutionRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.FileExportGenerationUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
@@ -49,6 +50,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final ExecutorRepository executorRepository;
     private final FileExportGenerationUseCase fileExportGenerationUseCase;
     private final ProcessCsvUploadUseCase processCsvUploadUseCase;
+    private final DeleteConsultationHistoryUseCase deleteConsultationHistoryUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -63,7 +65,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         } catch (UploadCsvExecption e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected server error occurred."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro interno no sistema."));
         } 
     }
 
@@ -139,17 +141,22 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @DeleteMapping(value = "/zerar-resultados/{email}")
-    public ResponseEntity<String> zerarResultados(@PathVariable("email") String email) {
+    @DeleteMapping(value = "/zerar-resultados")
+    public ResponseEntity<String> zerarResultados(
+            @RequestHeader("email") String email, 
+            @RequestHeader("bankId")String bankId) {
 
-        Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
+        try {
+            Boolean result = this.deleteConsultationHistoryUseCase.execute(email, bankId); 
+            
+            if(result != true) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Registros de consulta não encontrados.");
+            }
 
-        if (executorFind.isPresent()) {
-            repository.deleteByCsvId(executorFind.get().getId());
-            executorRepository.deleteById(executorFind.get().getId());
+            return ResponseEntity.ok().body("Dados zerados com sucesso.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no sistema.");
         }
-
-        return ResponseEntity.ok().body("Dados zerados com sucesso");
     }
 
     @Override

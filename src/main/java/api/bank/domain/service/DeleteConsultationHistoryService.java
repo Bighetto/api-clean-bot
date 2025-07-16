@@ -16,7 +16,7 @@ public class DeleteConsultationHistoryService implements DeleteConsultationHisto
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
     
     @Override
-    public void execute(String email, String bankId) {
+    public Boolean execute(String email, String bankId) {
 
         Boolean executorFind = this.executorDataProvider.existsByEmailAndBankId(email, bankId);
 
@@ -26,6 +26,8 @@ public class DeleteConsultationHistoryService implements DeleteConsultationHisto
             this.consultationEventsDataProvider.deleteByCsvId(entity.getId());
             this.executorDataProvider.deleteById(entity.getId());
         }
+
+        return executorFind;
     }
 
 }

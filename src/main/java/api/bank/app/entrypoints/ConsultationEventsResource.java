@@ -16,7 +16,7 @@ public interface ConsultationEventsResource {
 
     public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email);
 
-    public ResponseEntity<String> zerarResultados(String email);
+    public ResponseEntity<String> zerarResultados(String email, String bankId);
 
     public ResponseEntity<byte[]> exportarResultados(String email);
 
