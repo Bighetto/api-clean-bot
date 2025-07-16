@@ -1,15 +1,10 @@
 package api.bank.app.entrypoints;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.enums.ProcessStatus;
+import api.bank.app.exception.UploadCsvExecption;
 import api.bank.app.model.ConsultationEvents;
 import api.bank.app.model.Executor;
 import api.bank.app.model.ResultsCountProjection;
@@ -37,8 +33,8 @@ import api.bank.app.restmodel.ResultsCounterExecutionRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.FileExportGenerationUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
-import api.security.auth.domain.entity.UserEntity;
-import api.security.auth.domain.usecase.SearchUserByEmailUseCase;
+import api.bank.domain.usecase.ProcessCsvUploadUseCase;
+import api.security.auth.app.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -50,66 +46,25 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final ConsultationEventsRepository repository;
     private final CsvProcessManagerUseCase csvProcessManager;
     private final LogSenderUseCase logSender;
-    private final SearchUserByEmailUseCase searchUserByEmailUseCase;
     private final ExecutorRepository executorRepository;
     private final FileExportGenerationUseCase fileExportGenerationUseCase;
+    private final ProcessCsvUploadUseCase processCsvUploadUseCase;
 
     @Override
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file,
-            @RequestHeader("email") String email) {
+            @RequestHeader("email") String email, @RequestHeader("bankId")String bankId) {
         try {
+            String csvId = this.processCsvUploadUseCase.execute(file, email, bankId);
 
-            Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
-
-            if (executorFind.isPresent()) {
-                repository.deleteByCsvId(executorFind.get().getId());
-                executorRepository.deleteById(executorFind.get().getId());
-            }
-
-            String csvId = UUID.randomUUID().toString();
-            Executor executor = new Executor();
-            executor.setId(csvId);
-            executor.setUserLogin(email);
-            executor.setProcessStatus(ProcessStatus.PENDENTE);
-            LocalDateTime now = LocalDateTime.now();
-
-            UserEntity user = this.searchUserByEmailUseCase.execute(email);
-
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-
-            List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
-                    .lines()
-                    .filter(line -> !line.trim().isEmpty())
-                    .map(document -> {
-                        ConsultationEvents ce = new ConsultationEvents();
-                        ce.setDocumentClient(document.replaceAll("[.,;\\s-]", "").trim());
-                        ce.setCsvId(executor);
-                        ce.setInsertionDate(now);
-                        ce.setValueResult(null);
-                        ce.setUser(user.getDocument());
-                        return ce;
-                    })
-                    .collect(Collectors.toList());
-
-            executor.setTotalRegistered(registros.size());
-
-            executorRepository.save(executor);
-
-            final int BATCH_SIZE = 2000;
-            for (int i = 0; i < registros.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, registros.size());
-                List<ConsultationEvents> batch = registros.subList(i, end);
-                repository.saveAll(batch);
-            }
-
-            return ResponseEntity.ok(Map.of("csvId", csvId));
-
+            return ResponseEntity.ok(Map.of("csvId", csvId)); 
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (UploadCsvExecption e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected server error occurred."));
+        } 
     }
 
     @Override

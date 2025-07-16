@@ -10,7 +10,7 @@ import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 
 public interface ConsultationEventsResource {
 
-    public ResponseEntity<Map<String, String>> uploadCsv(MultipartFile file, String email);
+    public ResponseEntity<Map<String, String>> uploadCsv(MultipartFile file, String email, String bankId);
 
     public ResponseEntity<Map<String,String>> processarCsv(ProcessamentoCsvRestModel request);
 
