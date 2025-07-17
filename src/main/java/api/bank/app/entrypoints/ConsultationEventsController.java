@@ -1,8 +1,5 @@
 package api.bank.app.entrypoints;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,18 +19,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.converter.FindCsvStatusDTOToRestModelConverter;
 import api.bank.app.enums.ProcessStatus;
+import api.bank.app.exception.ConsultationEventsNotFoundException;
 import api.bank.app.exception.ExecutorNotFoundException;
+import api.bank.app.exception.FileExportException;
 import api.bank.app.exception.UploadCsvExecption;
-import api.bank.app.model.ConsultationEvents;
 import api.bank.app.model.Executor;
-import api.bank.app.repository.ConsultationEventsRepository;
 import api.bank.app.repository.ExecutorRepository;
 import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.CsvStatusCheckerUseCase;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
-import api.bank.domain.usecase.FileExportGenerationUseCase;
+import api.bank.domain.usecase.ExportConsultationResultsUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
 import api.security.auth.app.exception.UserNotFoundException;
@@ -45,15 +42,14 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ConsultationEventsController implements ConsultationEventsResource {
 
-    private final ConsultationEventsRepository consultationEventsRepository;
     private final CsvProcessManagerUseCase csvProcessManager;
     private final LogSenderUseCase logSender;
     private final ExecutorRepository executorRepository;
-    private final FileExportGenerationUseCase fileExportGenerationUseCase;
     private final ProcessCsvUploadUseCase processCsvUploadUseCase;
     private final DeleteConsultationHistoryUseCase deleteConsultationHistoryUseCase;
     private final CsvStatusCheckerUseCase csvStatusCheckerUseCase;
     private final FindCsvStatusDTOToRestModelConverter findCsvStatusDTOToRestModelConverter;
+    private final ExportConsultationResultsUseCase exportConsultationResultsUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -149,36 +145,24 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @PostMapping("/export/{email}")
-    public ResponseEntity<byte[]> exportarResultados(@PathVariable("email") String email) {
-
-        Optional<Executor> executorFind = executorRepository.findCurrentProcessStatusByEmail(email);
-
-        if (executorFind.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        List<ConsultationEvents> events = consultationEventsRepository.findAllByCsvId(executorFind.get().getId());
-
-        List<String[]> data = events.stream()
-                .map(e -> new String[] {
-                        e.getDocumentClient(),
-                        e.getValueResult()
-                })
-                .toList();
-
-        String[] headers = { "Documento", "Resultado" };
+    @PostMapping("/export")
+    public ResponseEntity<?> exportarResultados(
+            @RequestHeader("email") String email, 
+            @RequestHeader("bankId")String bankId) {
 
         try {
-            ByteArrayInputStream stream = this.fileExportGenerationUseCase.execute(data, headers);
-            byte[] bytes = stream.readAllBytes();
+            byte[] bytes = this.exportConsultationResultsUseCase.execute(email, bankId);
+
             return ResponseEntity.ok()
                     .header("Content-Disposition", "attachment; filename=resultado-consultas.xlsx")
                     .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     .body(bytes);
-        } catch (IOException e1) {
-            return ResponseEntity.internalServerError().build();
+        } catch (ExecutorNotFoundException | ConsultationEventsNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (FileExportException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-
     }
-
 }

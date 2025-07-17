@@ -4,6 +4,7 @@ import java.util.List;
 
 import api.bank.app.model.ConsultationEvents;
 import api.bank.app.model.ResultsCountProjection;
+import api.bank.domain.entity.ConsultationEventsEntity;
 
 public interface ConsultationEventsDataProvider {
 
@@ -14,4 +15,6 @@ public interface ConsultationEventsDataProvider {
     void deleteByCsvId(String id);
     
     void saveAll(List<ConsultationEvents> models);
+
+    List<ConsultationEventsEntity> findAllByCsvId(String id);
 }

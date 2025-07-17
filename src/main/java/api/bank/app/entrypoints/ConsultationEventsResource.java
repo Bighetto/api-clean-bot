@@ -18,6 +18,6 @@ public interface ConsultationEventsResource {
 
     public ResponseEntity<String> zerarResultados(String email, String bankId);
 
-    public ResponseEntity<byte[]> exportarResultados(String email);
+    public ResponseEntity<?> exportarResultados(String email, String bankId);
 
 }

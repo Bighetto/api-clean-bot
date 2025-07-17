@@ -27,7 +27,7 @@ public class ExecutorProvider implements ExecutorDataProvider {
     public ExecutorEntity findCurrentProcessStatusByEmailAndBankId(String email, String bankId) {
         return this.executorModelToEntityConverter.convertToEntity(
             executorRepository.findCurrentProcessStatusByEmailAndBankId(email, bankId)
-            .orElseThrow(() -> new ExecutorNotFoundException(email)));
+            .orElseThrow(() -> new ExecutorNotFoundException("Nenhum registro de consulta foi encontrado para o usuario do e-mail: " + email)));
     }
 
     @Override
