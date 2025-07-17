@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -33,6 +32,7 @@ import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.ExportConsultationResultsUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
+import api.bank.domain.usecase.StopExecutionUseCase;
 import api.security.auth.app.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 
@@ -50,6 +50,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final CsvStatusCheckerUseCase csvStatusCheckerUseCase;
     private final FindCsvStatusDTOToRestModelConverter findCsvStatusDTOToRestModelConverter;
     private final ExportConsultationResultsUseCase exportConsultationResultsUseCase;
+    private final StopExecutionUseCase stopExecutionUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -91,19 +92,24 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
     }
 
-    @PostMapping("/parar/{email}")
-    public ResponseEntity<String> pararProcessamento(@PathVariable String email) {
-        Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(email);
-        if (executor.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+    @PostMapping("/parar")
+    public ResponseEntity<String> pararProcessamento(
+            @RequestHeader("email") String email, 
+            @RequestHeader("bankId")String bankId) {
 
-        boolean parado = csvProcessManager.pararProcessamento(executor.get().getProcessId());
-
-        if (parado) {
-            return ResponseEntity.ok("Processo interrompido com sucesso.");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo não encontrado ou já finalizado.");
+        try {
+            boolean parado = stopExecutionUseCase.execute(email, bankId);
+            
+            if (parado) {
+                return ResponseEntity.ok("Processo interrompido com sucesso.");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo já finalizado.");
+            }
+            
+        } catch (ExecutorNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo não foi encontrado");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no sistema, por favor tente novamente");
         }
     }
 
