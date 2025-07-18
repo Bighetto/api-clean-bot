@@ -30,10 +30,6 @@ public class UploadCsvService implements UploadCsvUseCase {
     private final ExecutorDataProvider executorDataProvider;
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
 
-    //Result Value tava salvo como null mas anotado como not null no banco.
-    private static final String DEFAULT_RESULT_VALUE = "1";
-
-
     @Override
     public String execute(UploadCsvDTO dto) {
 
@@ -64,7 +60,7 @@ public class UploadCsvService implements UploadCsvUseCase {
                         ce.setDocumentClient(document.replaceAll("[.,;\\s-]", "").trim());
                         ce.setCsvId(executor);
                         ce.setInsertionDate(now);
-                        ce.setValueResult(DEFAULT_RESULT_VALUE);
+                        ce.setValueResult(null);
                         ce.setUser(userDocument);
                         ce.setBank(bank);
                         return ce;

@@ -1,7 +1,6 @@
 package api.bank.app.entrypoints;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,21 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.converter.FindCsvStatusDTOToRestModelConverter;
-import api.bank.app.enums.ProcessStatus;
+import api.bank.app.converter.ProcessamentoCsvRestModelToDtoConverter;
+import api.bank.app.exception.ConflictException;
 import api.bank.app.exception.ConsultationEventsNotFoundException;
 import api.bank.app.exception.ExecutorNotFoundException;
 import api.bank.app.exception.FileExportException;
 import api.bank.app.exception.UploadCsvExecption;
-import api.bank.app.model.Executor;
-import api.bank.app.repository.ExecutorRepository;
 import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
-import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.dto.ProcessamentoCsvDTO;
 import api.bank.domain.usecase.CsvStatusCheckerUseCase;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.ExportConsultationResultsUseCase;
-import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
+import api.bank.domain.usecase.StartCsvProcessingUseCase;
 import api.bank.domain.usecase.StopExecutionUseCase;
 import api.security.auth.app.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
@@ -42,15 +40,14 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ConsultationEventsController implements ConsultationEventsResource {
 
-    private final CsvProcessManagerUseCase csvProcessManager;
-    private final LogSenderUseCase logSender;
-    private final ExecutorRepository executorRepository;
     private final ProcessCsvUploadUseCase processCsvUploadUseCase;
     private final DeleteConsultationHistoryUseCase deleteConsultationHistoryUseCase;
     private final CsvStatusCheckerUseCase csvStatusCheckerUseCase;
     private final FindCsvStatusDTOToRestModelConverter findCsvStatusDTOToRestModelConverter;
     private final ExportConsultationResultsUseCase exportConsultationResultsUseCase;
     private final StopExecutionUseCase stopExecutionUseCase;
+    private final ProcessamentoCsvRestModelToDtoConverter processamentoCsvRestModelToDtoConverter;
+    private final StartCsvProcessingUseCase startCsvProcessingUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -73,23 +70,16 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     @PostMapping("/executar")
     public ResponseEntity<Map<String, String>> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
         try {
+            ProcessamentoCsvDTO processamentoCsvDTO = this.processamentoCsvRestModelToDtoConverter.convertToDto(request);
 
-            Optional<Executor> executor = this.executorRepository.findCurrentProcessStatusByEmail(request.getEmail());
-
-            if (executor.isEmpty() || executor.get().getProcessStatus() == ProcessStatus.EM_ANDAMENTO) {
-                return ResponseEntity.badRequest().build();
-            }
-            String processoId = csvProcessManager.iniciarProcessamento(
-                    request.getCsvId(),
-                    request.getUsuarios(),
-                    request.getEmail(),
-                    logSender);
+            String processoId = this.startCsvProcessingUseCase.execute(processamentoCsvDTO);
 
             return ResponseEntity.ok(Map.of("processoId", processoId));
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
     }
 
     @PostMapping("/parar")
@@ -105,7 +95,6 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo já finalizado.");
             }
-            
         } catch (ExecutorNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo não foi encontrado");
         } catch (Exception e) {
