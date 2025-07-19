@@ -21,7 +21,7 @@ import api.bank.app.exception.ConflictException;
 import api.bank.app.exception.ConsultationEventsNotFoundException;
 import api.bank.app.exception.ExecutorNotFoundException;
 import api.bank.app.exception.FileExportException;
-import api.bank.app.exception.UploadCsvExecption;
+import api.bank.app.exception.UploadCsvException;
 import api.bank.app.restmodel.FindCsvStatusRestModel;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 import api.bank.domain.dto.ProcessamentoCsvDTO;
@@ -52,14 +52,14 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     @Override
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file,
-            @RequestHeader("email") String email, @RequestHeader("bankId")String bankId) {
+            @RequestHeader("email") String email, @RequestHeader("bankId") String bankId) {
         try {
             String csvId = this.processCsvUploadUseCase.execute(file, email, bankId);
 
             return ResponseEntity.ok(Map.of("csvId", csvId)); 
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (UploadCsvExecption e) {
+        } catch (UploadCsvException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro interno no sistema."));

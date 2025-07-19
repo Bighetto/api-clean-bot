@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.enums.ProcessStatus;
-import api.bank.app.exception.UploadCsvExecption;
+import api.bank.app.exception.UploadCsvException;
 import api.bank.app.model.Bank;
 import api.bank.app.model.ConsultationEvents;
 import api.bank.app.model.Executor;
@@ -29,19 +29,33 @@ public class UploadCsvService implements UploadCsvUseCase {
     
     private final ExecutorDataProvider executorDataProvider;
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
+    private static final int BATCH_SIZE = 2000;
 
     @Override
     public String execute(UploadCsvDTO dto) {
 
-        String userDocument = dto.getUserDocument();
-        MultipartFile file = dto.getFile();
-        if (file == null || file.isEmpty()) {
-            throw new UploadCsvExecption("The CSV file cannot be null or empty.");
-        }
-
         String csvId = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now();
-        
+
+        try {
+            Executor executor = createInitialExecutor(dto, csvId);
+
+            List<ConsultationEvents> registros = parseCsvToEvents(dto.getFile(), executor);
+
+            executor.setTotalRegistered(registros.size());
+
+            this.executorDataProvider.save(executor);
+            
+            saveEventsInBatches(registros);
+
+            return csvId;
+        } catch (IOException e) {
+            throw new UploadCsvException("An error occurred while reading the CSV file.");
+        } catch (Exception e) {
+            throw new UploadCsvException("An unexpected internal error occurred during CSV processing.");
+        }    
+    }
+
+    private Executor createInitialExecutor(UploadCsvDTO dto, String csvId) {
         Bank bank = new Bank();
         bank.setId(dto.getBankId());
 
@@ -50,10 +64,16 @@ public class UploadCsvService implements UploadCsvUseCase {
         executor.setUserLogin(dto.getEmail());
         executor.setProcessStatus(ProcessStatus.PENDENTE);
         executor.setBank(bank);
+        return executor;
+    }
 
-        try {
-            List<ConsultationEvents> registros = new BufferedReader(new InputStreamReader(file.getInputStream()))
-                    .lines()
+    private List<ConsultationEvents> parseCsvToEvents(MultipartFile file, Executor executor) throws IOException {
+        final LocalDateTime now = LocalDateTime.now();
+        final Bank bank = executor.getBank();
+        final String userDocument = executor.getUserLogin(); 
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            return reader.lines()
                     .filter(line -> !line.trim().isEmpty())
                     .map(document -> {
                         ConsultationEvents ce = new ConsultationEvents();
@@ -66,24 +86,19 @@ public class UploadCsvService implements UploadCsvUseCase {
                         return ce;
                     })
                     .collect(Collectors.toList());
+        }
+    }
 
-            executor.setTotalRegistered(registros.size());
-
-            this.executorDataProvider.save(executor);
-
-            final int BATCH_SIZE = 2000;
-            for (int i = 0; i < registros.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, registros.size());
-                List<ConsultationEvents> batch = registros.subList(i, end);
-                this.consultationEventsDataProvider.saveAll(batch);
-            }
-
-            return csvId;
-        } catch (IOException e) {
-            throw new UploadCsvExecption("An error occurred while reading the CSV file.");
-        } catch (Exception e) {
-            throw new UploadCsvExecption("An unexpected internal error occurred during CSV processing.");
-        }    
+    private void saveEventsInBatches(List<ConsultationEvents> events) {
+        if (events.isEmpty()) {
+            return;
+        }
+        
+        for (int i = 0; i < events.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, events.size());
+            List<ConsultationEvents> batch = events.subList(i, end);
+            this.consultationEventsDataProvider.saveAll(batch);
+        }
     }
 
 }
