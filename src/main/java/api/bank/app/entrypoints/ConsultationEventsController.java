@@ -21,6 +21,7 @@ import api.bank.app.exception.ConflictException;
 import api.bank.app.exception.ConsultationEventsNotFoundException;
 import api.bank.app.exception.ExecutorNotFoundException;
 import api.bank.app.exception.FileExportException;
+import api.bank.app.exception.StopExecutionException;
 import api.bank.app.exception.UpdateProcessIdException;
 import api.bank.app.exception.UpdateProcessStatusException;
 import api.bank.app.exception.UploadCsvException;
@@ -100,7 +101,9 @@ public class ConsultationEventsController implements ConsultationEventsResource 
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo já finalizado.");
             }
         } catch (ExecutorNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Processo não foi encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch(StopExecutionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no sistema, por favor tente novamente");
         }
