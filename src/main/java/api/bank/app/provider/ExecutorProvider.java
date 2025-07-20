@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 
 import api.bank.app.converter.ExecutorModelToEntityConverter;
 import api.bank.app.exception.ExecutorNotFoundException;
+import api.bank.app.exception.UpdateProcessIdException;
+import api.bank.app.exception.UpdateProcessStatusException;
 import api.bank.app.model.Executor;
 import api.bank.app.repository.ExecutorRepository;
 import api.bank.domain.dataprovider.ExecutorDataProvider;
@@ -37,5 +39,29 @@ public class ExecutorProvider implements ExecutorDataProvider {
 
     public void save(Executor executor) {
         this.executorRepository.save(executor);
+    }
+
+    @Override
+    public void updateProcessIdByCsvId(String csvId, String processId) {
+        this.executorRepository.findById(csvId)
+            .orElseThrow(() -> new UpdateProcessIdException("Registro não encontrado"));
+        
+        try {
+            this.executorRepository.updateProcessIdByCsvId(csvId, processId);   
+        } catch (Exception e) {
+            throw new UpdateProcessIdException("Erro ao atualizar o status do CSV: " + csvId);
+        }
+    }
+
+    @Override
+    public void updateProcessStatusByCsvId(String csvId, String statusName) {
+        this.executorRepository.findById(csvId)
+            .orElseThrow(() -> new UpdateProcessStatusException("Registro não encontrado"));
+        
+        try {
+            this.executorRepository.updateProcessStatusByCsvId(csvId, statusName);
+        } catch (Exception e) {
+            throw new UpdateProcessStatusException("Erro ao atualizar o status do CSV: " + csvId);
+        }
     }
 }

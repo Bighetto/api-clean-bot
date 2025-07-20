@@ -1,10 +1,30 @@
 package api.bank.domain.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import javax.naming.NameNotFoundException;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
 import api.bank.app.enums.ProcessStatus;
 import api.bank.app.model.BankUser;
-import api.bank.app.model.ConsultationEvents;
-import api.bank.app.repository.ConsultationEventsRepository;
 import api.bank.domain.dataprovider.BankUserDataProvider;
+import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
+import api.bank.domain.dto.UpdateValueResultDTO;
+import api.bank.domain.entity.ConsultationEventsEntity;
 import api.bank.domain.usecase.CreateRestTemplateSessionUseCase;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
@@ -15,29 +35,18 @@ import api.bank.domain.usecase.UpdateCsvStatusUseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.*;
-import java.util.concurrent.*;
-
-import javax.naming.NameNotFoundException;
-
 @Component
 @AllArgsConstructor
 public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(15);
     private final Map<String, Future<?>> processos = new ConcurrentHashMap<>();
-    private final ConsultationEventsRepository repository;
+    private final ConsultationEventsDataProvider consultationEventsDataProvider;
     private final BankUserDataProvider bankUserDataProvider;
     private final GetUserBankV8TokenUseCase getTokenUseCase;
     private final ProcessRowUseCase processRowUseCase;
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
     private final AESEncryptor aesEncryptor;
-    private final ConsultationEventsRepository eventsRepository;
     private final UpdateCsvStatusUseCase updateCsvStatusService;
     private final UpdateCsvIdProcessUseCase updateCsvIdProcessService;
 
@@ -59,14 +68,14 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
             int pageSize = 500;
             int pageNumber = 0;
-            Page<ConsultationEvents> page;
+            Page<ConsultationEventsEntity> page;
 
             try {
                 logSender.enviarLog("Início do processamento.", email);
 
                 do {
-                    page = repository.findValidByCsvId(csvId, PageRequest.of(pageNumber, pageSize));
-                    List<ConsultationEvents> registros = page.getContent();
+                    page = consultationEventsDataProvider.findValidByCsvId(csvId, PageRequest.of(pageNumber, pageSize));
+                    List<ConsultationEventsEntity> registros = page.getContent();
                     int total = registros.size();
                     int usuariosCount = usuarios.size();
                     int porUsuario = total / usuariosCount;
@@ -85,7 +94,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                             continue;
                         }
 
-                        final List<ConsultationEvents> subLista = registros.subList(start, end);
+                        final List<ConsultationEventsEntity> subLista = registros.subList(start, end);
                         final String usuario = usuarios.get(i);
 
                         Optional<BankUser> user = this.bankUserDataProvider.findBankUserById(usuario);
@@ -94,7 +103,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                         Future<?> subtaskFuture = executor.submit(() -> {
                             try {
-                                for (ConsultationEvents registro : subLista) {
+                                for (ConsultationEventsEntity registro : subLista) {
                                     if (Thread.currentThread().isInterrupted())
                                         return;
 
@@ -104,7 +113,12 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                     String result = this.processRowUseCase.execute(restTemplate, token,
                                             registro.getDocumentClient());
                                     registro.setValueResult(result);
-                                    repository.save(registro);
+
+                                    UpdateValueResultDTO dto = new UpdateValueResultDTO();
+                                    dto.setId(registro.getId());
+                                    dto.setValueResult(result);
+
+                                    consultationEventsDataProvider.updateValueResult(dto);
 
                                     logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient()
                                             + ". Resultado: " + result, email);
@@ -132,7 +146,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
                 new Thread(() -> {
                     try {
-                        Integer countEventsNull = this.eventsRepository.countResultsNull(csvId);
+                        Integer countEventsNull = this.consultationEventsDataProvider.countResultsNull(csvId);
                         if (countEventsNull > 0) {
                             updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
                             logSender.enviarLog("Processamento pausado com sucesso!", email);
