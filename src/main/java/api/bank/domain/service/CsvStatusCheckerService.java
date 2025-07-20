@@ -24,6 +24,12 @@ public class CsvStatusCheckerService implements CsvStatusCheckerUseCase {
         ResultsCountProjection result = this.consultationEventsDataProvider.getResultsCounterByCsvId(executor.getId());
         Integer quantityDocuments = this.consultationEventsDataProvider.findQuantityOfDocuments(executor.getId());
 
+        ResultsCounterExecutionDTO resultCounts = createResultCountsDto(result);
+        
+        return createFindCsvStatusDTO(quantityDocuments, executor, resultCounts);
+    }
+
+    private ResultsCounterExecutionDTO createResultCountsDto(ResultsCountProjection result) {
         ResultsCounterExecutionDTO resultCounts = new ResultsCounterExecutionDTO();
         resultCounts.setTotalConsultas(result.getTotal_consultas());
         resultCounts.setComSaldo(result.getCom_saldo());
@@ -31,13 +37,16 @@ public class CsvStatusCheckerService implements CsvStatusCheckerUseCase {
         resultCounts.setNaoAutorizado(result.getNao_autorizado());
         resultCounts.setSemSaldo(result.getSem_saldo());
 
+        return resultCounts;
+    }
+
+    private FindCsvStatusDTO createFindCsvStatusDTO(Integer quantityDocuments, ExecutorEntity executor, ResultsCounterExecutionDTO resultCounts) {
         FindCsvStatusDTO statusInfo = new FindCsvStatusDTO();
         statusInfo.setQuantidadeDocumentos(quantityDocuments);
         statusInfo.setIdCsv(executor.getId());
         statusInfo.setStatus(executor.getProcessStatus().toString());
         statusInfo.setResults(resultCounts);
-        
+
         return statusInfo;
     }
-
 }
