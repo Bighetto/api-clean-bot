@@ -34,7 +34,7 @@ public class GetUserBankHubTokenService implements GetUserBankHubTokenUseCase {
     public String execute(String login, String password) {
 
         try {
-            HubBankGetTokenRequestDto dto = creaHubBankGetTokenRequestDto(login, password);
+            HubBankGetTokenRequestDto dto = createHubBankGetTokenRequestDto(login, password);
             ResponseEntity<String> response = sendRequest(dto);
             
             return parseToken(response);    
@@ -52,7 +52,7 @@ public class GetUserBankHubTokenService implements GetUserBankHubTokenUseCase {
     }
 
 
-    private HubBankGetTokenRequestDto creaHubBankGetTokenRequestDto(String login, String password) {
+    private HubBankGetTokenRequestDto createHubBankGetTokenRequestDto(String login, String password) {
         HubBankGetTokenRequestDto dto = new HubBankGetTokenRequestDto();
         dto.setUsername(login);
         dto.setPassword(password);
@@ -68,8 +68,6 @@ public class GetUserBankHubTokenService implements GetUserBankHubTokenUseCase {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<HubBankGetTokenRequestDto> request = new HttpEntity<>(dto, headers);
-
-        System.out.println(request);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
             this.hubBankConfigDataProvider.getHubBankURLGetToken(),
