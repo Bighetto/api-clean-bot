@@ -38,8 +38,6 @@ public class GetUserBankHubTokenService implements GetUserBankHubTokenUseCase {
             ResponseEntity<String> response = sendRequest(dto);
             
             return parseToken(response);    
-        } catch (GetUserBankHubTokenException e) {
-            throw e;
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             throw new GetUserBankHubTokenException("Erro de comunicação com o servidor do Hub Bank: " + e.getStatusCode());
         } catch (ResourceAccessException e) {

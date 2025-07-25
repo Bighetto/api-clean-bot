@@ -23,6 +23,7 @@ public class ConsultationEventsModelToEntityConverter extends ConvertCase<Consul
             .id(model.getId())
             .documentClient(model.getDocumentClient())
             .valueResult(model.getValueResult())
+            .bankId(model.getBank().getId())
             .build();
     }
 

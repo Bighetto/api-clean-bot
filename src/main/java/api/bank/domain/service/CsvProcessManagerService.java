@@ -44,6 +44,8 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
     private final BankUserDataProvider bankUserDataProvider;
     private final GetUserBankV8TokenUseCase getTokenUseCase;
+    private final GetUserBankHubTokenService getUserBankHubTokenService;
+    private final ProcessRowHubBankService processRowHubBankService;
     private final ProcessRowUseCase processRowUseCase;
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
     private final AESEncryptor aesEncryptor;
@@ -54,6 +56,19 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender) {
+
+        Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId, PageRequest.of(0, 1));
+        if (paginaInicial.isEmpty()) {
+            throw new IllegalStateException("O CSV com ID " + csvId + " está vazio ou não contém registros válidos.");
+        }
+        String bancoDoCsvId = paginaInicial.getContent().get(0).getBankId();
+
+        try {
+            validarUsuariosDoBanco(bancoDoCsvId, usuarios);
+        } catch (NameNotFoundException | IllegalStateException e) {
+            logSender.enviarLog("Falha na validação antes de iniciar o processamento: " + e.getMessage(), email);
+            throw new RuntimeException("Erro de validação: " + e.getMessage(), e);
+        }
 
         String processoId = UUID.randomUUID().toString();
         System.out.println(processoId);
@@ -106,13 +121,30 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                 for (ConsultationEventsEntity registro : subLista) {
                                     if (Thread.currentThread().isInterrupted())
                                         return;
-
+                                    String token;
+                                    String result = "NÃO AUTORIZADO";
                                     String password = this.aesEncryptor.decrypt(user.get().getPassword());
                                     RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
-                                    String token = this.getTokenUseCase.execute(user.get().getLogin(), password);
-                                    String result = this.processRowUseCase.execute(restTemplate, token,
-                                            registro.getDocumentClient());
-                                    registro.setValueResult(result);
+
+                                    switch (registro.getBankId()) {
+                                        case "1":
+                                            token = this.getTokenUseCase.execute(user.get().getLogin(), password);
+                                            result = this.processRowUseCase.execute(restTemplate, token,
+                                                    registro.getDocumentClient());
+                                            registro.setValueResult(result);
+                                            break;
+                                        case "2":
+                                            token = this.getUserBankHubTokenService.execute(user.get().getLogin(), password);
+                                            result = this.processRowHubBankService.execute(restTemplate, token,
+                                                    registro.getDocumentClient());
+                                            registro.setValueResult(result);
+                                            break;
+                                        default:
+                                            logSender.enviarLog("Processamento não efetuado", email);
+                                            updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
+                                            limparProcesso(processoId, csvId);
+                                            break;   
+                                    }
 
                                     UpdateValueResultDTO dto = new UpdateValueResultDTO();
                                     dto.setId(registro.getId());
@@ -165,7 +197,6 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                 logSender.enviarLog("Pausa no processamento.", email);
                 updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
                 limparProcesso(processoId, csvId);
-
             }
         });
 
@@ -203,5 +234,19 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
         processos.remove(processoId);
         processosSubTasks.remove(processoId);
     }
+
+    private void validarUsuariosDoBanco(String targetBankId, List<String> usuarios) throws NameNotFoundException {
+        for (String userId : usuarios) {
+            BankUser user = this.bankUserDataProvider.findBankUserById(userId)
+                    .orElseThrow(() -> new NameNotFoundException("Usuário com ID " + userId + " não encontrado."));
+
+            String userBankId = user.getBank().getId();
+
+            if (!userBankId.equals(targetBankId)) {
+                throw new IllegalStateException("O usuário " + user.getLogin() + " (Banco ID: " + userBankId + 
+                                                ") não pertence ao banco do CSV (Banco ID: " + targetBankId + ").");
+            }
+        }
+    }   
 
 }

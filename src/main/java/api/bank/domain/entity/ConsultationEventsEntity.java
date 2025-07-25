@@ -14,4 +14,5 @@ public class ConsultationEventsEntity {
     private String id;
     private String documentClient;
     private String valueResult;
+    private String bankId;
 }
