@@ -19,16 +19,17 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import api.bank.app.exception.HubBankResponseErrorTypeException;
 import api.bank.app.exception.SimulateHubBankCustomerException;
-import api.bank.app.exception.V8ResponseErrorTypeException;
 import api.bank.domain.dataprovider.HubBankConfigDataProvider;
 import api.bank.domain.dto.HubBankResponseErrorType;
 import api.bank.domain.dto.HubBankSimulateRequestDto;
+import api.bank.domain.usecase.SimulateHubBankCustomerUseCase;
 import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class SimulateHubBankCustomerService {
+public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUseCase {
 
     private final HubBankConfigDataProvider hubBankConfigDataProvider;
     private final Integer maxRetries = 3;
@@ -37,6 +38,7 @@ public class SimulateHubBankCustomerService {
         HubBankResponseErrorType.TOO_MANY_REQUESTS
     );
 
+    @Override
     public String execute(RestTemplate session, String acessToken, String customerCPF) {
         Integer retries = 0;
         final String HUB_BANK_SIMULATE_URL = this.hubBankConfigDataProvider.getHubBankURLSimulate();
@@ -125,7 +127,7 @@ public class SimulateHubBankCustomerService {
         if (errorMessage != null && !errorMessage.isEmpty()) {
             try {
                 return HubBankResponseErrorType.fromMessage(errorMessage);
-            } catch (V8ResponseErrorTypeException  e) {
+            } catch (HubBankResponseErrorTypeException e) {
                 throw new SimulateHubBankCustomerException("Tipo de erro de negócio não mapeado pela aplicação: " + errorMessage);
             }
         }

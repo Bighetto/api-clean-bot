@@ -1,7 +1,7 @@
 package api.bank.domain.dto;
 
 
-import api.bank.app.exception.V8ResponseErrorTypeException;
+import api.bank.app.exception.HubBankResponseErrorTypeException;
 
 public enum HubBankResponseErrorType {
 
@@ -27,6 +27,6 @@ public enum HubBankResponseErrorType {
                 return type;
             }
         }
-        throw new V8ResponseErrorTypeException("Error formating error message to error type");
+        throw new HubBankResponseErrorTypeException("Error formating error message to error type");
     }
 }

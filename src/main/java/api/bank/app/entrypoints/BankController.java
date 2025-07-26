@@ -21,10 +21,10 @@ import api.bank.app.exception.UserBankV8ValidationException;
 import api.bank.app.restmodel.BankUserRestModel;
 import api.bank.app.restmodel.UploadBankUserRequestRestModel;
 import api.bank.domain.entity.BankUserEntity;
-import api.bank.domain.service.ValidateUserBankService;
 import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
+import api.bank.domain.usecase.ValidateUserBankUseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
@@ -38,14 +38,14 @@ public class BankController implements BankResource {
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
     private final UploadBankUserUseCase uploadBankUserUseCase;
     private final AESEncryptor aesEncryptor;
-    private final ValidateUserBankService validateUserBankService;
+    private final ValidateUserBankUseCase validateUserBankUseCase;
     private final DeleteBankUserUseCase deleteBankUserUseCase;
 
     @Override
     @PostMapping
     public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
         try {
-            this.validateUserBankService.execute(restModel);
+            this.validateUserBankUseCase.execute(restModel);
 
             String encryptedPassword = aesEncryptor.encrypt(restModel.getPassword());
             restModel.setPassword(encryptedPassword);

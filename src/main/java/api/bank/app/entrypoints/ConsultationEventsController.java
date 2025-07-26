@@ -21,6 +21,7 @@ import api.bank.app.exception.ConflictException;
 import api.bank.app.exception.ConsultationEventsNotFoundException;
 import api.bank.app.exception.ExecutorNotFoundException;
 import api.bank.app.exception.FileExportException;
+import api.bank.app.exception.StartCsvProcessingException;
 import api.bank.app.exception.StopExecutionException;
 import api.bank.app.exception.UpdateProcessIdException;
 import api.bank.app.exception.UpdateProcessStatusException;
@@ -78,7 +79,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             String processoId = this.startCsvProcessingUseCase.execute(processamentoCsvDTO);
 
             return ResponseEntity.ok(Map.of("processoId", processoId));
-        } catch (ConflictException | UpdateProcessIdException | UpdateProcessStatusException e) {
+        } catch (ConflictException | UpdateProcessIdException | UpdateProcessStatusException | StartCsvProcessingException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("Erro: ", e.getMessage()));
         } catch(ConsultationEventsNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("Erro: ", e.getMessage()));

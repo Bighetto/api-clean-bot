@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import api.bank.app.enums.ProcessStatus;
+import api.bank.app.exception.StartCsvProcessingException;
 import api.bank.app.model.BankUser;
 import api.bank.domain.dataprovider.BankUserDataProvider;
 import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
@@ -27,6 +28,7 @@ import api.bank.domain.dto.UpdateValueResultDTO;
 import api.bank.domain.entity.ConsultationEventsEntity;
 import api.bank.domain.usecase.CreateRestTemplateSessionUseCase;
 import api.bank.domain.usecase.CsvProcessManagerUseCase;
+import api.bank.domain.usecase.GetUserBankHubTokenUseCase;
 import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
@@ -44,7 +46,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
     private final BankUserDataProvider bankUserDataProvider;
     private final GetUserBankV8TokenUseCase getTokenUseCase;
-    private final GetUserBankHubTokenService getUserBankHubTokenService;
+    private final GetUserBankHubTokenUseCase getUserBankHubTokenUseCase;
     private final ProcessRowHubBankService processRowHubBankService;
     private final ProcessRowUseCase processRowUseCase;
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
@@ -59,7 +61,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
         Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId, PageRequest.of(0, 1));
         if (paginaInicial.isEmpty()) {
-            throw new IllegalStateException("O CSV com ID " + csvId + " está vazio ou não contém registros válidos.");
+            throw new StartCsvProcessingException("O CSV com ID " + csvId + " está vazio ou não contém registros válidos.");
         }
         String bancoDoCsvId = paginaInicial.getContent().get(0).getBankId();
 
@@ -67,7 +69,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             validarUsuariosDoBanco(bancoDoCsvId, usuarios);
         } catch (NameNotFoundException | IllegalStateException e) {
             logSender.enviarLog("Falha na validação antes de iniciar o processamento: " + e.getMessage(), email);
-            throw new RuntimeException("Erro de validação: " + e.getMessage(), e);
+            throw new StartCsvProcessingException("Erro de validação: " + e.getMessage());
         }
 
         String processoId = UUID.randomUUID().toString();
@@ -134,7 +136,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                             registro.setValueResult(result);
                                             break;
                                         case "2":
-                                            token = this.getUserBankHubTokenService.execute(user.get().getLogin(), password);
+                                            token = this.getUserBankHubTokenUseCase.execute(user.get().getLogin(), password);
                                             result = this.processRowHubBankService.execute(restTemplate, token,
                                                     registro.getDocumentClient());
                                             registro.setValueResult(result);
