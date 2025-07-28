@@ -27,12 +27,15 @@ import api.bank.app.exception.UpdateProcessIdException;
 import api.bank.app.exception.UpdateProcessStatusException;
 import api.bank.app.exception.UploadCsvException;
 import api.bank.app.restmodel.FindCsvStatusRestModel;
+import api.bank.app.restmodel.OperationType;
 import api.bank.app.restmodel.ProcessamentoCsvRestModel;
+import api.bank.domain.dto.CsvExecutionHistoryDto;
 import api.bank.domain.dto.ProcessamentoCsvDTO;
 import api.bank.domain.usecase.CsvStatusCheckerUseCase;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.ExportConsultationResultsUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
+import api.bank.domain.usecase.SaveProcessingLogUseCase;
 import api.bank.domain.usecase.StartCsvProcessingUseCase;
 import api.bank.domain.usecase.StopExecutionUseCase;
 import api.security.auth.app.exception.UserNotFoundException;
@@ -52,6 +55,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final StopExecutionUseCase stopExecutionUseCase;
     private final ProcessamentoCsvRestModelToDtoConverter processamentoCsvRestModelToDtoConverter;
     private final StartCsvProcessingUseCase startCsvProcessingUseCase;
+    private final SaveProcessingLogUseCase saveProcessingLogUseCase;
 
     @Override
     @PostMapping("/upload")
@@ -78,6 +82,13 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
             String processoId = this.startCsvProcessingUseCase.execute(processamentoCsvDTO);
 
+            CsvExecutionHistoryDto input = new CsvExecutionHistoryDto();
+            input.setContent(request);
+            input.setUserEmail(request.getEmail());
+            input.setOperationType(OperationType.INICIOU);
+            
+            saveProcessingLogUseCase.execute(input);
+
             return ResponseEntity.ok(Map.of("processoId", processoId));
         } catch (ConflictException | UpdateProcessIdException | UpdateProcessStatusException | StartCsvProcessingException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("Erro: ", e.getMessage()));
@@ -95,6 +106,15 @@ public class ConsultationEventsController implements ConsultationEventsResource 
 
         try {
             boolean parado = stopExecutionUseCase.execute(email, bankId);
+
+            Map<String, String> logContent = Map.of("bankId", bankId);
+
+            CsvExecutionHistoryDto input = new CsvExecutionHistoryDto();
+            input.setContent(logContent);
+            input.setUserEmail(email);
+            input.setOperationType(OperationType.PAROU);
+            
+            saveProcessingLogUseCase.execute(input);
             
             if (parado) {
                 return ResponseEntity.ok("Processo interrompido com sucesso.");
