@@ -14,7 +14,6 @@ public class UpdateCsvIdProcessService implements UpdateCsvIdProcessUseCase {
 
     @Override
     public void execute(String csvId, String processId) {
-        System.out.println(processId);
         this.executorDataProvider.updateProcessIdByCsvId(csvId, processId);
     }
 }

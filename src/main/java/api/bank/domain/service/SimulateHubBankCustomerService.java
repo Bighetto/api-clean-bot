@@ -35,7 +35,11 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
     private final Integer maxRetries = 3;
 
     private static final Set<HubBankResponseErrorType> RETRYABLE_ERRORS = EnumSet.of(
-        HubBankResponseErrorType.TOO_MANY_REQUESTS
+        HubBankResponseErrorType.TOO_MANY_REQUESTS,
+        HubBankResponseErrorType.SIMULATION_IN_PROGRESS,
+        HubBankResponseErrorType.REQUEST_TIMEOUT,
+        HubBankResponseErrorType.QUERY_LIMIT_EXCEEDED,
+        HubBankResponseErrorType.FIDUCIARY_OPERATION_IN_PROGRESS
     );
 
     @Override
@@ -73,7 +77,7 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
                 } catch (JsonProcessingException jsonEx) {
                     throw new SimulateHubBankCustomerException("Falha ao processar a resposta de erro do banco Hub.");
                 }
-            }catch(ResourceAccessException e) {
+            } catch (ResourceAccessException e) {
                 throw new SimulateHubBankCustomerException("Erro de conexão com o banco Hub");
             } catch (RestClientException e) {
                 throw new SimulateHubBankCustomerException("Erro enviando requisição para o banco Hub");
@@ -137,12 +141,16 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
 
     private String mapErrorTypeToMessage(HubBankResponseErrorType errorType) {
         switch (errorType) {
-            case WORKER_NOT_BIRTHYDAY:
+            case WORKER_NOT_IN_BIRTHDAY_WITHDRAWAL:
             case INSUFFICIENT_BALANCE:
+            case NO_AVAILABLE_BALANCE:
+            case COSTS_HIGHER_THAN_FINANCED_AMOUNT:
                 return "SEM SALDO";
 
             case FIDUCIARY_INSTITUTION:
-            case CLIENT_NOT_AUTHORIZED:
+            case BANKS_NOT_AUTHORIZED:
+            case OPERATION_TEMPORARILY_BLOCKED:
+            case WORKER_HAS_NO_FGTS_ACCOUNT: 
                 return "NÃO AUTORIZADO";
                 
             default:
