@@ -2,6 +2,7 @@ package api.bank.domain.service;
 
 import org.springframework.stereotype.Component;
 
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
 import api.bank.domain.dataprovider.ExecutorDataProvider;
 import api.bank.domain.entity.ExecutorEntity;
@@ -14,9 +15,11 @@ public class DeleteConsultationHistoryService implements DeleteConsultationHisto
     
     private final ExecutorDataProvider executorDataProvider;
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
+    private final BankDataProvider bankDataProvider;
     
     @Override
-    public Boolean execute(String email, String bankId) {
+    public Boolean execute(String email, String bankName) {
+        String bankId = this.bankDataProvider.findByName(bankName).getId();
 
         Boolean executorFind = this.executorDataProvider.existsByEmailAndBankId(email, bankId);
 

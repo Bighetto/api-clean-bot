@@ -14,7 +14,7 @@ public class ProcessamentoCsvRestModelToDtoConverter {
         ProcessamentoCsvDTO dto = new ProcessamentoCsvDTO();
         dto.setCsvId(model.getCsvId());
         dto.setEmail(model.getEmail());
-        dto.setBankId(model.getBankId());
+        dto.setBankName(model.getBankName());
         dto.setUsuarios(model.getUsuarios());
 
         return dto;

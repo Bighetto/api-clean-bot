@@ -8,7 +8,7 @@ import lombok.Data;
 public class ProcessamentoCsvRestModel {
     private String csvId;
     private String email;
-    private String bankId;
+    private String bankName;
     private List<String> usuarios;
 }
 

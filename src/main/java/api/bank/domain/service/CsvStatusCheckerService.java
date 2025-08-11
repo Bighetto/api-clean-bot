@@ -3,6 +3,7 @@ package api.bank.domain.service;
 import org.springframework.stereotype.Component;
 
 import api.bank.app.model.ResultsCountProjection;
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
 import api.bank.domain.dataprovider.ExecutorDataProvider;
 import api.bank.domain.dto.ResultsCounterExecutionDTO;
@@ -17,9 +18,12 @@ public class CsvStatusCheckerService implements CsvStatusCheckerUseCase {
 
     private final ExecutorDataProvider executorDataProvider;
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
+    private final BankDataProvider bankDataProvider;
 
     @Override
-    public FindCsvStatusDTO execute(String email, String bankId) {
+    public FindCsvStatusDTO execute(String email, String bankName) {
+        String bankId = this.bankDataProvider.findByName(bankName).getId();
+
         ExecutorEntity executor = this.executorDataProvider.findCurrentProcessStatusByEmailAndBankId(email, bankId);
         ResultsCountProjection result = this.consultationEventsDataProvider.getResultsCounterByCsvId(executor.getId());
         Integer quantityDocuments = this.consultationEventsDataProvider.findQuantityOfDocuments(executor.getId());

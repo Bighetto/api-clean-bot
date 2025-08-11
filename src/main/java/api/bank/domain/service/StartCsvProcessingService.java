@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import api.bank.app.enums.ProcessStatus;
 import api.bank.app.exception.ConflictException;
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.ExecutorDataProvider;
 import api.bank.domain.dto.ProcessamentoCsvDTO;
 import api.bank.domain.entity.ExecutorEntity;
@@ -19,10 +20,13 @@ public class StartCsvProcessingService implements StartCsvProcessingUseCase {
     private final ExecutorDataProvider executorDataProvider;
     private final CsvProcessManagerUseCase csvProcessManagerUseCase;
     private final LogSenderUseCase logSender;
+    private final BankDataProvider bankDataProvider;
     
     @Override
     public String execute(ProcessamentoCsvDTO dto) {
-        ExecutorEntity executor = this.executorDataProvider.findCurrentProcessStatusByEmailAndBankId(dto.getEmail(), dto.getBankId());
+        String bankId = this.bankDataProvider.findByName(dto.getBankName()).getId();
+
+        ExecutorEntity executor = this.executorDataProvider.findCurrentProcessStatusByEmailAndBankId(dto.getEmail(), bankId);
 
         if (executor.getProcessStatus() == ProcessStatus.EM_ANDAMENTO) {
             throw new ConflictException("Não é possível iniciar, o processo já está em andamento.");

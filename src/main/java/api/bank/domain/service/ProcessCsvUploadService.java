@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.restmodel.UploadCsvDTO;
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
 import api.bank.domain.usecase.UploadCsvUseCase;
@@ -19,10 +20,12 @@ public class ProcessCsvUploadService implements ProcessCsvUploadUseCase {
     private final DeleteConsultationHistoryUseCase deleteConsultationHistoryUseCase;
     private final SearchUserByEmailUseCase searchUserByEmailUseCase;
     private final UploadCsvUseCase uploadCsvUseCase;
+    private final BankDataProvider bankDataProvider;
 
     @Override
-    public String execute(MultipartFile file, String email, String bankId) {
+    public String execute(MultipartFile file, String email, String bankName) {
 
+        String bankId = this.bankDataProvider.findByName(bankName).getId();
         this.deleteConsultationHistoryUseCase.execute(email, bankId);
 
         UserEntity user = this.searchUserByEmailUseCase.execute(email);

@@ -1,5 +1,5 @@
 package api.bank.domain.usecase;
 
 public interface DeleteConsultationHistoryUseCase {
-    Boolean execute(String email, String bankId);
+    Boolean execute(String email, String bankName);
 }

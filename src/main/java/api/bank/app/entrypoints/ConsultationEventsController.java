@@ -7,9 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,20 +58,21 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final SaveProcessingLogUseCase saveProcessingLogUseCase;
 
     @Override
-    @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadCsv(@RequestParam("file") MultipartFile file,
-            @RequestHeader("email") String email, @RequestHeader("bankId") String bankId) {
+    @PostMapping("/{bankName}/{email}/upload")
+    public ResponseEntity<Map<String, String>> uploadCsv(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable("bankName") String bankName,
+            @PathVariable("email") String email) {
         try {
-            String csvId = this.processCsvUploadUseCase.execute(file, email, bankId);
-
-            return ResponseEntity.ok(Map.of("csvId", csvId)); 
+            String csvId = this.processCsvUploadUseCase.execute(file, email, bankName);
+            return ResponseEntity.ok(Map.of("csvId", csvId));
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         } catch (UploadCsvException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro interno no sistema."));
-        } 
+        }
     }
 
     @Override
@@ -99,15 +100,14 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         }
     }
 
-    @PostMapping("/parar")
+    @PostMapping("/{bankName}/{email}/parar")
     public ResponseEntity<String> pararProcessamento(
-            @RequestHeader("email") String email, 
-            @RequestHeader("bankId")String bankId) {
-
+            @PathVariable("bankName") String bankName,
+            @PathVariable("email") String email) {
         try {
-            boolean parado = stopExecutionUseCase.execute(email, bankId);
+            boolean parado = stopExecutionUseCase.execute(email, bankName);
 
-            Map<String, String> logContent = Map.of("bankId", bankId);
+            Map<String, String> logContent = Map.of("bankName", bankName);
 
             CsvExecutionHistoryDto input = new CsvExecutionHistoryDto();
             input.setContent(logContent);
@@ -131,16 +131,15 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @GetMapping("/status")
+    @GetMapping("/{bankName}/{email}/status")
     public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(
-            @RequestHeader("email") String email, 
-            @RequestHeader("bankId")String bankId) {
-
+            @PathVariable("bankName") String bankName,
+            @PathVariable("email") String email) {
         try {
             FindCsvStatusRestModel statusInfo = this.findCsvStatusDTOToRestModelConverter
-                .convertToModel(this.csvStatusCheckerUseCase.execute(email, bankId));
+                .convertToModel(this.csvStatusCheckerUseCase.execute(email, bankName));
             
-            return ResponseEntity.ok().body(statusInfo);    
+            return ResponseEntity.ok().body(statusInfo);      
         } catch (ExecutorNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
@@ -149,15 +148,14 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @DeleteMapping(value = "/zerar-resultados")
+    @DeleteMapping(value = "/{bankName}/{email}/zerar-resultados")
     public ResponseEntity<String> zerarResultados(
-            @RequestHeader("email") String email, 
-            @RequestHeader("bankId")String bankId) {
-
+            @PathVariable("bankName") String bankName,
+            @PathVariable("email") String email) {
         try {
-            Boolean result = this.deleteConsultationHistoryUseCase.execute(email, bankId); 
+            Boolean result = this.deleteConsultationHistoryUseCase.execute(email, bankName); 
             
-            if(result != true) {
+            if(Boolean.FALSE.equals(result)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Registros de consulta não encontrados.");
             }
 
@@ -168,13 +166,12 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @PostMapping("/export")
+    @PostMapping("/{bankName}/{email}/export")
     public ResponseEntity<?> exportarResultados(
-            @RequestHeader("email") String email, 
-            @RequestHeader("bankId")String bankId) {
-
+            @PathVariable("bankName") String bankName,
+            @PathVariable("email") String email) {
         try {
-            byte[] bytes = this.exportConsultationResultsUseCase.execute(email, bankId);
+            byte[] bytes = this.exportConsultationResultsUseCase.execute(email, bankName);
 
             return ResponseEntity.ok()
                     .header("Content-Disposition", "attachment; filename=resultado-consultas.xlsx")

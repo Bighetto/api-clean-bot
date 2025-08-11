@@ -9,6 +9,6 @@ public class ProcessamentoCsvDTO {
 
     private String csvId;
     private String email;
-    private String bankId;
+    private String bankName;
     private List<String> usuarios;
 }

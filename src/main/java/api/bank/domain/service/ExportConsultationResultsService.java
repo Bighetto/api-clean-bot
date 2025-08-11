@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import api.bank.domain.dataprovider.BankDataProvider;
 import api.bank.domain.dataprovider.ConsultationEventsDataProvider;
 import api.bank.domain.dataprovider.ExecutorDataProvider;
 import api.bank.domain.entity.ConsultationEventsEntity;
@@ -20,9 +21,12 @@ public class ExportConsultationResultsService implements ExportConsultationResul
     private final ExecutorDataProvider executorDataProvider;
     private final ConsultationEventsDataProvider consultationEventsDataProvider;
     private final FileExportGenerationUseCase fileExportGenerationUseCase;
+    private final BankDataProvider bankDataProvider;
 
     @Override
-    public byte[] execute(String email, String bankId) {
+    public byte[] execute(String email, String bankName) {
+        String bankId = this.bankDataProvider.findByName(bankName).getId();
+
         ExecutorEntity executorFind = this.executorDataProvider.findCurrentProcessStatusByEmailAndBankId(email, bankId);
         List<ConsultationEventsEntity> events = this.consultationEventsDataProvider.findAllByCsvId(executorFind.getId());
 
