@@ -3,7 +3,7 @@ package api.bank.domain.service;
 import org.springframework.stereotype.Service;
 
 import api.bank.app.enums.ProcessStatus;
-import api.bank.app.repository.ExecutorRepository;
+import api.bank.domain.dataprovider.ExecutorDataProvider;
 import api.bank.domain.usecase.UpdateCsvStatusUseCase;
 import lombok.AllArgsConstructor;
 
@@ -11,13 +11,10 @@ import lombok.AllArgsConstructor;
 @Service
 public class UpdateCsvStatusService implements UpdateCsvStatusUseCase {
 
-    private final ExecutorRepository executorRepository;
+    private final ExecutorDataProvider executorDataProvider;
 
     @Override
     public void execute(String csvId, ProcessStatus status) {
-
-        this.executorRepository.updateProcessStatusByCsvId(csvId, status.name());
-
+        this.executorDataProvider.updateProcessStatusByCsvId(csvId, status.name());
     }
-
 }

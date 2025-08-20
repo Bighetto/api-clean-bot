@@ -4,6 +4,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import api.bank.app.exception.FileExportException;
 import api.bank.domain.usecase.FileExportGenerationUseCase;
 
 import java.io.ByteArrayInputStream;
@@ -16,7 +17,7 @@ import java.util.List;
 public class FileExportGenerationService implements FileExportGenerationUseCase{
 
     @Override
-    public ByteArrayInputStream execute(List<String[]> data, String[] headers) throws IOException {
+    public ByteArrayInputStream execute(List<String[]> data, String[] headers) {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Export");
@@ -47,6 +48,10 @@ public class FileExportGenerationService implements FileExportGenerationUseCase{
 
             workbook.write(out);
             return new ByteArrayInputStream(out.toByteArray());
+        } catch (IOException e) {
+            throw new FileExportException("Ocorreu um erro interno ao gerar o arquivo. Por favor, tente novamente.");
+        } catch (Exception e) {
+            throw new FileExportException("Falha ao processar os dados para a exportação. Verifique se as informações fornecidas são válidas.");
         }
     }
     
