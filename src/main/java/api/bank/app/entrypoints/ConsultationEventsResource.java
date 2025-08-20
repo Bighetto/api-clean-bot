@@ -10,14 +10,14 @@ import api.bank.app.restmodel.ProcessamentoCsvRestModel;
 
 public interface ConsultationEventsResource {
 
-    public ResponseEntity<Map<String, String>> uploadCsv(MultipartFile file, String email);
+    public ResponseEntity<Map<String, String>> uploadCsv(MultipartFile file, String email, String bankId);
 
-    public ResponseEntity<Map<String,String>> processarCsv(ProcessamentoCsvRestModel request);
+    public ResponseEntity<Map<String, String>> processarCsv(ProcessamentoCsvRestModel request);
 
-    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email);
+    public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(String email, String bankId);
 
-    public ResponseEntity<String> zerarResultados(String email);
+    public ResponseEntity<String> zerarResultados(String email, String bankId);
 
-    public ResponseEntity<byte[]> exportarResultados(String email);
+    public ResponseEntity<?> exportarResultados(String email, String bankId);
 
 }

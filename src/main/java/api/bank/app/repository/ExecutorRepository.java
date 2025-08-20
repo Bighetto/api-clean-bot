@@ -21,6 +21,14 @@ public interface ExecutorRepository extends JpaRepository<Executor, String> {
             " where ul.email =  :email ", nativeQuery = true)
     Optional<Executor> findCurrentProcessStatusByEmail(@Param("email") String email);
 
+    @Query(value = "SELECT qe.* FROM query_executor qe " +
+               "WHERE qe.user_login = :email " +
+               "AND qe.bank_id = :bankId", nativeQuery = true)
+    Optional<Executor> findCurrentProcessStatusByEmailAndBankId(
+        @Param("email") String email, 
+        @Param("bankId") String bankId
+    );
+
     @Transactional
     @Modifying
     @Query(value = " UPDATE query_executor e SET e.process_status = :status WHERE e.id = :csvId ", nativeQuery = true)
@@ -37,4 +45,10 @@ public interface ExecutorRepository extends JpaRepository<Executor, String> {
     void updateAllStatusEmAndamentoToPendente(@Param("statusPendente") ProcessStatus statusPendente,
             @Param("statusEmAndamento") ProcessStatus statusEmAndamento);
 
+    @Query(value = "SELECT EXISTS(" +
+                "  SELECT 1 FROM query_executor qe " +
+                "  JOIN user_login ul ON ul.email = qe.user_login " +
+                "  WHERE ul.email = :email AND qe.bank_id = :bankId" +
+                ")", nativeQuery = true)
+    Integer existsByEmailAndBankId(@Param("email") String email, @Param("bankId") String bankId);   
 }

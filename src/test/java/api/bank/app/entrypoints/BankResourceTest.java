@@ -31,7 +31,7 @@ import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
-import api.bank.domain.usecase.ValidateUserBankV8UseCase;
+import api.bank.domain.usecase.ValidateUserBankUseCase;
 import api.security.auth.app.security.AESEncryptor;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +48,7 @@ public class BankResourceTest {
     @Mock 
     PasswordEncoder passwordEncoder;
     @Mock
-    private ValidateUserBankV8UseCase validateUserBankV8UseCase;
+    private ValidateUserBankUseCase validateUserBankUseCase;
     @Mock
     private DeleteBankUserUseCase deleteBankUserUseCase;
 
@@ -56,7 +56,7 @@ public class BankResourceTest {
 
     @BeforeEach
     void setUp(){
-        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, aesEncryptor, validateUserBankV8UseCase, deleteBankUserUseCase);
+        controller = new BankController(findUsersBankByUserDocumentUseCase, bankUserEntityToRestModelConverter, uploadBankUserUseCase, aesEncryptor, validateUserBankUseCase, deleteBankUserUseCase);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class BankResourceTest {
         restModel.setBankName("testBankName");
 
 
-        doNothing().when(validateUserBankV8UseCase).execute(any());
+        doNothing().when(validateUserBankUseCase).execute(any());
         doNothing().when(uploadBankUserUseCase).execute(any());
 
         try {
@@ -76,7 +76,7 @@ public class BankResourceTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
     
-            verify(validateUserBankV8UseCase, times(1)).execute(restModel);
+            verify(validateUserBankUseCase, times(1)).execute(restModel);
             verify(uploadBankUserUseCase, times(1)).execute(restModel);
     
         } catch (Exception e) {
@@ -91,7 +91,7 @@ public class BankResourceTest {
         restModel.setLogin("invalidUser");
         restModel.setPassword("testpassword");
 
-        doThrow(new UserBankV8ValidationException(null)).when(validateUserBankV8UseCase).execute(any());
+        doThrow(new UserBankV8ValidationException(null)).when(validateUserBankUseCase).execute(any());
 
         ResponseEntity<String> response = controller.uploadBankUser(restModel);
 

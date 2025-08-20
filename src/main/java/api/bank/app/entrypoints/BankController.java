@@ -24,7 +24,7 @@ import api.bank.domain.entity.BankUserEntity;
 import api.bank.domain.usecase.DeleteBankUserUseCase;
 import api.bank.domain.usecase.FindUsersBankByUserDocumentUseCase;
 import api.bank.domain.usecase.UploadBankUserUseCase;
-import api.bank.domain.usecase.ValidateUserBankV8UseCase;
+import api.bank.domain.usecase.ValidateUserBankUseCase;
 import api.security.auth.app.security.AESEncryptor;
 import lombok.AllArgsConstructor;
 
@@ -38,14 +38,14 @@ public class BankController implements BankResource {
     private final BankUserEntityToRestModelConverter bankUserEntityToRestModelConverter;
     private final UploadBankUserUseCase uploadBankUserUseCase;
     private final AESEncryptor aesEncryptor;
-    private final ValidateUserBankV8UseCase validateUserBankV8UseCase;
+    private final ValidateUserBankUseCase validateUserBankUseCase;
     private final DeleteBankUserUseCase deleteBankUserUseCase;
 
     @Override
     @PostMapping
     public ResponseEntity<String> uploadBankUser(@RequestBody UploadBankUserRequestRestModel restModel) {
         try {
-            this.validateUserBankV8UseCase.execute(restModel);
+            this.validateUserBankUseCase.execute(restModel);
 
             String encryptedPassword = aesEncryptor.encrypt(restModel.getPassword());
             restModel.setPassword(encryptedPassword);
@@ -58,9 +58,10 @@ public class BankController implements BankResource {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (BankUserAlreadyExistsException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
 
     @Override
     @GetMapping("/{email}")

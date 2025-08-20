@@ -28,4 +28,8 @@ public class Executor {
 
     @Column(name = "process_id", nullable = true)
     private String processId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_id", referencedColumnName = "id", nullable = false)
+    private Bank bank;
 }

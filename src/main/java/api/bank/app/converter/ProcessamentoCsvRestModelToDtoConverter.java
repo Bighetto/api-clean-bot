@@ -1,0 +1,24 @@
+package api.bank.app.converter;
+
+import org.springframework.stereotype.Component;
+
+import api.bank.app.restmodel.ProcessamentoCsvRestModel;
+import api.bank.domain.dto.ProcessamentoCsvDTO;
+import lombok.AllArgsConstructor;
+
+@Component
+@AllArgsConstructor
+public class ProcessamentoCsvRestModelToDtoConverter {
+
+    public ProcessamentoCsvDTO convertToDto(ProcessamentoCsvRestModel model) {
+        ProcessamentoCsvDTO dto = new ProcessamentoCsvDTO();
+        dto.setCsvId(model.getCsvId());
+        dto.setEmail(model.getEmail());
+        dto.setBankName(model.getBankName());
+        dto.setUsuarios(model.getUsuarios());
+        dto.setBankName(model.getBankName());
+
+        return dto;
+    }
+
+}
