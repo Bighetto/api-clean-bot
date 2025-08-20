@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import api.bank.app.restmodel.UploadCsvDTO;
 import api.bank.domain.dataprovider.BankDataProvider;
+import api.bank.domain.entity.BankEntity;
 import api.bank.domain.usecase.DeleteConsultationHistoryUseCase;
 import api.bank.domain.usecase.ProcessCsvUploadUseCase;
 import api.bank.domain.usecase.UploadCsvUseCase;
@@ -25,8 +26,8 @@ public class ProcessCsvUploadService implements ProcessCsvUploadUseCase {
     @Override
     public String execute(MultipartFile file, String email, String bankName) {
 
-        String bankId = this.bankDataProvider.findByName(bankName).getId();
-        this.deleteConsultationHistoryUseCase.execute(email, bankId);
+        BankEntity bankEntity = this.bankDataProvider.findByName(bankName);
+        this.deleteConsultationHistoryUseCase.execute(email, bankName);
 
         UserEntity user = this.searchUserByEmailUseCase.execute(email);
         if (user == null) {
@@ -34,10 +35,10 @@ public class ProcessCsvUploadService implements ProcessCsvUploadUseCase {
         }
 
         UploadCsvDTO dto = new UploadCsvDTO();
-                dto.setFile(file);
-                dto.setEmail(email);
-                dto.setUserDocument(user.getDocument());
-                dto.setBankId(bankId);
+        dto.setFile(file);
+        dto.setEmail(email);
+        dto.setUserDocument(user.getDocument());
+        dto.setBankId(bankEntity.getId());
 
         return this.uploadCsvUseCase.execute(dto);
     }

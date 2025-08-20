@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import api.bank.app.converter.FindCsvStatusDTOToRestModelConverter;
 import api.bank.app.converter.ProcessamentoCsvRestModelToDtoConverter;
 import api.bank.app.exception.ConflictException;
@@ -58,11 +58,11 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     private final SaveProcessingLogUseCase saveProcessingLogUseCase;
 
     @Override
-    @PostMapping("/{bankName}/{email}/upload")
+    @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadCsv(
             @RequestParam("file") MultipartFile file,
-            @PathVariable("bankName") String bankName,
-            @PathVariable("email") String email) {
+            @RequestHeader("bankName") String bankName,
+            @RequestHeader("email") String email) {
         try {
             String csvId = this.processCsvUploadUseCase.execute(file, email, bankName);
             return ResponseEntity.ok(Map.of("csvId", csvId));
@@ -71,7 +71,8 @@ public class ConsultationEventsController implements ConsultationEventsResource 
         } catch (UploadCsvException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro interno no sistema."));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Erro interno no sistema."));
         }
     }
 
@@ -79,7 +80,8 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     @PostMapping("/executar")
     public ResponseEntity<Map<String, String>> processarCsv(@RequestBody ProcessamentoCsvRestModel request) {
         try {
-            ProcessamentoCsvDTO processamentoCsvDTO = this.processamentoCsvRestModelToDtoConverter.convertToDto(request);
+            ProcessamentoCsvDTO processamentoCsvDTO = this.processamentoCsvRestModelToDtoConverter
+                    .convertToDto(request);
 
             String processoId = this.startCsvProcessingUseCase.execute(processamentoCsvDTO);
 
@@ -87,20 +89,21 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             input.setContent(request);
             input.setUserEmail(request.getEmail());
             input.setOperationType(OperationType.INICIOU);
-            
+
             saveProcessingLogUseCase.execute(input);
 
             return ResponseEntity.ok(Map.of("processoId", processoId));
-        } catch (ConflictException | UpdateProcessIdException | UpdateProcessStatusException | StartCsvProcessingException e) {
+        } catch (ConflictException | UpdateProcessIdException | UpdateProcessStatusException
+                | StartCsvProcessingException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("Erro: ", e.getMessage()));
-        } catch(ConsultationEventsNotFoundException e) {
+        } catch (ConsultationEventsNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("Erro: ", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @PostMapping("/{bankName}/{email}/parar")
+    @PostMapping("/parar/{email}/{bankName}")
     public ResponseEntity<String> pararProcessamento(
             @PathVariable("bankName") String bankName,
             @PathVariable("email") String email) {
@@ -113,9 +116,9 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             input.setContent(logContent);
             input.setUserEmail(email);
             input.setOperationType(OperationType.PAROU);
-            
+
             saveProcessingLogUseCase.execute(input);
-            
+
             if (parado) {
                 return ResponseEntity.ok("Processo interrompido com sucesso.");
             } else {
@@ -123,28 +126,29 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             }
         } catch (ExecutorNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch(StopExecutionException e) {
+        } catch (StopExecutionException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no sistema, por favor tente novamente");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno no sistema, por favor tente novamente");
         }
     }
 
     @Override
-    @GetMapping("/{bankName}/{email}/status")
+    @GetMapping("/status/{email}/{bankName}")
     public ResponseEntity<FindCsvStatusRestModel> buscarStatusAtualProcessamentoCsv(
             @PathVariable("bankName") String bankName,
             @PathVariable("email") String email) {
         try {
             FindCsvStatusRestModel statusInfo = this.findCsvStatusDTOToRestModelConverter
-                .convertToModel(this.csvStatusCheckerUseCase.execute(email, bankName));
-            
-            return ResponseEntity.ok().body(statusInfo);      
+                    .convertToModel(this.csvStatusCheckerUseCase.execute(email, bankName));
+
+            return ResponseEntity.ok().body(statusInfo);
         } catch (ExecutorNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } 
+        }
     }
 
     @Override
@@ -153,9 +157,9 @@ public class ConsultationEventsController implements ConsultationEventsResource 
             @PathVariable("bankName") String bankName,
             @PathVariable("email") String email) {
         try {
-            Boolean result = this.deleteConsultationHistoryUseCase.execute(email, bankName); 
-            
-            if(Boolean.FALSE.equals(result)) {
+            Boolean result = this.deleteConsultationHistoryUseCase.execute(email, bankName);
+
+            if (Boolean.FALSE.equals(result)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Registros de consulta não encontrados.");
             }
 

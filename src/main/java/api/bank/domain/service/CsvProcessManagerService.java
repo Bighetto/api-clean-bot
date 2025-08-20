@@ -57,18 +57,22 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final ConcurrentMap<String, List<Future<?>>> processosSubTasks = new ConcurrentHashMap<>();
 
     @Override
-    public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender) {
+    public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender,
+            String bankName) {
 
-        Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId, PageRequest.of(0, 1));
+        Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId,
+                PageRequest.of(0, 1));
         if (paginaInicial.isEmpty()) {
-            throw new StartCsvProcessingException("O CSV com ID " + csvId + " está vazio ou não contém registros válidos.");
+            throw new StartCsvProcessingException(
+                    "O CSV com ID " + csvId + " está vazio ou não contém registros válidos.");
         }
         String bancoDoCsvId = paginaInicial.getContent().get(0).getBankId();
 
         try {
             validarUsuariosDoBanco(bancoDoCsvId, usuarios);
         } catch (NameNotFoundException | IllegalStateException e) {
-            logSender.enviarLog("Falha na validação antes de iniciar o processamento: " + e.getMessage(), email);
+            logSender.enviarLog("Falha na validação antes de iniciar o processamento: " + e.getMessage(), email,
+                    bankName);
             throw new StartCsvProcessingException("Erro de validação: " + e.getMessage());
         }
 
@@ -88,7 +92,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             Page<ConsultationEventsEntity> page;
 
             try {
-                logSender.enviarLog("Início do processamento.", email);
+                logSender.enviarLog("Início do processamento.", email, bankName);
 
                 do {
                     page = consultationEventsDataProvider.findValidByCsvId(csvId, PageRequest.of(pageNumber, pageSize));
@@ -129,23 +133,24 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                     RestTemplate restTemplate = this.createRestTemplateSessionUseCase.execute();
 
                                     switch (registro.getBankId()) {
-                                        case "1":
+                                        case "V8 Digital":
                                             token = this.getTokenUseCase.execute(user.get().getLogin(), password);
                                             result = this.processRowUseCase.execute(restTemplate, token,
                                                     registro.getDocumentClient());
                                             registro.setValueResult(result);
                                             break;
-                                        case "2":
-                                            token = this.getUserBankHubTokenUseCase.execute(user.get().getLogin(), password);
+                                        case "Hub Credito":
+                                            token = this.getUserBankHubTokenUseCase.execute(user.get().getLogin(),
+                                                    password);
                                             result = this.processRowHubBankService.execute(restTemplate, token,
                                                     registro.getDocumentClient());
                                             registro.setValueResult(result);
                                             break;
                                         default:
-                                            logSender.enviarLog("Processamento não efetuado", email);
+                                            logSender.enviarLog("Processamento não efetuado", email, bankName);
                                             updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
                                             limparProcesso(processoId, csvId);
-                                            break;   
+                                            break;
                                     }
 
                                     UpdateValueResultDTO dto = new UpdateValueResultDTO();
@@ -155,7 +160,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                     consultationEventsDataProvider.updateValueResult(dto);
 
                                     logSender.enviarLog("Busca efetuada para o cliente: " + registro.getDocumentClient()
-                                            + ". Resultado: " + result, email);
+                                            + ". Resultado: " + result, email, bankName);
 
                                     try {
                                         Thread.sleep(2000);
@@ -183,20 +188,20 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                         Integer countEventsNull = this.consultationEventsDataProvider.countResultsNull(csvId);
                         if (countEventsNull > 0) {
                             updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
-                            logSender.enviarLog("Processamento pausado com sucesso!", email);
+                            logSender.enviarLog("Processamento pausado com sucesso!", email, bankName);
                         } else {
                             updateCsvStatusService.execute(csvId, ProcessStatus.ENCERRADO);
-                            logSender.enviarLog("Processamento concluído com sucesso!", email);
+                            logSender.enviarLog("Processamento concluído com sucesso!", email, bankName);
                         }
                     } catch (Exception e) {
                         Thread.currentThread().interrupt();
-                        logSender.enviarLog("Thread de atualização de status foi interrompida.", email);
+                        logSender.enviarLog("Thread de atualização de status foi interrompida.", email, bankName);
                     }
                     limparProcesso(processoId, csvId);
                 }).start();
 
             } catch (Exception e) {
-                logSender.enviarLog("Pausa no processamento.", email);
+                logSender.enviarLog("Pausa no processamento.", email, bankName);
                 updateCsvStatusService.execute(csvId, ProcessStatus.PENDENTE);
                 limparProcesso(processoId, csvId);
             }
@@ -242,13 +247,13 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
             BankUser user = this.bankUserDataProvider.findBankUserById(userId)
                     .orElseThrow(() -> new NameNotFoundException("Usuário com ID " + userId + " não encontrado."));
 
-            String userBankId = user.getBank().getId();
+            String userBankId = user.getBank().getName();
 
             if (!userBankId.equals(targetBankId)) {
-                throw new IllegalStateException("O usuário " + user.getLogin() + " (Banco ID: " + userBankId + 
-                                                ") não pertence ao banco do CSV (Banco ID: " + targetBankId + ").");
+                throw new IllegalStateException("O usuário " + user.getLogin() + " (Banco ID: " + userBankId +
+                        ") não pertence ao banco do CSV (Banco ID: " + targetBankId + ").");
             }
         }
-    }   
+    }
 
 }

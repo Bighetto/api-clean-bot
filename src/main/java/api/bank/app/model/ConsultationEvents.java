@@ -33,7 +33,7 @@ public class ConsultationEvents {
     @Column(name = "user_document")
     private String user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "bank_id", referencedColumnName = "id", nullable = false)
     private Bank bank;
 }

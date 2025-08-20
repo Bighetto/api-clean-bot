@@ -9,7 +9,8 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class ConsultationEventsModelToEntityConverter extends ConvertCase<ConsultationEventsEntity, ConsultationEvents> {
+public class ConsultationEventsModelToEntityConverter
+        extends ConvertCase<ConsultationEventsEntity, ConsultationEvents> {
 
     @Override
     public ConsultationEvents convertToModel(ConsultationEventsEntity entity) {
@@ -19,12 +20,12 @@ public class ConsultationEventsModelToEntityConverter extends ConvertCase<Consul
 
     @Override
     public ConsultationEventsEntity convertToEntity(ConsultationEvents model) {
+
         return ConsultationEventsEntity.builder()
-            .id(model.getId())
-            .documentClient(model.getDocumentClient())
-            .valueResult(model.getValueResult())
-            .bankId(model.getBank().getId())
-            .build();
+                .id(model.getId())
+                .documentClient(model.getDocumentClient())
+                .bankId(model.getBank().getName())
+                .build();
     }
 
 }

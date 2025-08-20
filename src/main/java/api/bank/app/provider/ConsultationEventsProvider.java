@@ -53,21 +53,20 @@ public class ConsultationEventsProvider implements ConsultationEventsDataProvide
         }
 
         return modelsList.stream()
-            .map(model -> consultationEventsModelToEntityConverter.convertToEntity(model))
-            .collect(Collectors.toList());
+                .map(model -> consultationEventsModelToEntityConverter.convertToEntity(model))
+                .collect(Collectors.toList());
     }
 
     @Override
     public Page<ConsultationEventsEntity> findValidByCsvId(String csvId, Pageable pageable) {
         Page<ConsultationEvents> modelsList = this.consultationEventsRepository.findValidByCsvId(csvId, pageable);
-        
+
         if (modelsList.isEmpty()) {
             throw new ConsultationEventsNotFoundException("Nenhum registro de consulta encontrado no CSV utilizado");
         }
 
-        Page<ConsultationEventsEntity> entitiesPage = modelsList.map(model ->
-            consultationEventsModelToEntityConverter.convertToEntity(model)
-        );
+        Page<ConsultationEventsEntity> entitiesPage = modelsList
+                .map(model -> consultationEventsModelToEntityConverter.convertToEntity(model));
 
         return entitiesPage;
     }
