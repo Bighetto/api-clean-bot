@@ -21,7 +21,7 @@ public class ValidateUserBankService implements ValidateUserBankUseCase {
             case "Banco V8":
                 this.validateUserBankV8UseCase.execute(restModel);
                 break;
-            case "Banco Hub":
+            case "Hub Credito":
                 this.getUserBankHubTokenService.execute(restModel.getLogin(), restModel.getPassword());
                 break;
             default:
