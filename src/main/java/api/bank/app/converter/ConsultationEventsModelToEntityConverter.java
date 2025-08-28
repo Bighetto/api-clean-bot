@@ -25,6 +25,7 @@ public class ConsultationEventsModelToEntityConverter
                 .id(model.getId())
                 .documentClient(model.getDocumentClient())
                 .bankId(model.getBank().getName())
+                .valueResult(model.getValueResult())
                 .build();
     }
 
