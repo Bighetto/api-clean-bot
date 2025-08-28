@@ -152,7 +152,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @DeleteMapping(value = "/{bankName}/{email}/zerar-resultados")
+    @DeleteMapping(value = "/zerar-resultados/{email}/{bankName}")
     public ResponseEntity<String> zerarResultados(
             @PathVariable("bankName") String bankName,
             @PathVariable("email") String email) {
@@ -170,7 +170,7 @@ public class ConsultationEventsController implements ConsultationEventsResource 
     }
 
     @Override
-    @PostMapping("/{bankName}/{email}/export")
+    @PostMapping("/export/{email}/{bankName}")
     public ResponseEntity<?> exportarResultados(
             @PathVariable("bankName") String bankName,
             @PathVariable("email") String email) {
