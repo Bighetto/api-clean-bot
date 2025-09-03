@@ -17,6 +17,7 @@ public class ProcessamentoCsvRestModelToDtoConverter {
         dto.setBankName(model.getBankName());
         dto.setUsuarios(model.getUsuarios());
         dto.setBankName(model.getBankName());
+        dto.setNomeTabelaFiltro(model.getNomeTabelaFiltro());
 
         return dto;
     }

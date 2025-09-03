@@ -35,43 +35,41 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
     private final Integer maxRetries = 3;
 
     private static final Set<HubBankResponseErrorType> RETRYABLE_ERRORS = EnumSet.of(
-        HubBankResponseErrorType.TOO_MANY_REQUESTS,
-        HubBankResponseErrorType.SIMULATION_IN_PROGRESS,
-        HubBankResponseErrorType.REQUEST_TIMEOUT,
-        HubBankResponseErrorType.QUERY_LIMIT_EXCEEDED,
-        HubBankResponseErrorType.FIDUCIARY_OPERATION_IN_PROGRESS
-    );
+            HubBankResponseErrorType.TOO_MANY_REQUESTS,
+            HubBankResponseErrorType.SIMULATION_IN_PROGRESS,
+            HubBankResponseErrorType.REQUEST_TIMEOUT,
+            HubBankResponseErrorType.QUERY_LIMIT_EXCEEDED,
+            HubBankResponseErrorType.FIDUCIARY_OPERATION_IN_PROGRESS);
 
     @Override
-    public String execute(RestTemplate session, String acessToken, String customerCPF) {
+    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
         Integer retries = 0;
         final String HUB_BANK_SIMULATE_URL = this.hubBankConfigDataProvider.getHubBankURLSimulate();
-        
+
         while (retries < maxRetries) {
             try {
                 HttpEntity<HubBankSimulateRequestDto> request = createRequest(acessToken, customerCPF);
-                
-                ResponseEntity<String> responseEntity = session.postForEntity(
-                    HUB_BANK_SIMULATE_URL, 
-                    request, 
-                    String.class
-                );
 
-                return String.valueOf(parseValue(responseEntity));
+                ResponseEntity<String> responseEntity = session.postForEntity(
+                        HUB_BANK_SIMULATE_URL,
+                        request,
+                        String.class);
+
+                return String.valueOf(parseValue(responseEntity, nomeTabelaFiltro));
 
             } catch (HttpClientErrorException e) {
-                
-                if(e.getStatusCode() == HttpStatusCode.valueOf(401)) {
+
+                if (e.getStatusCode() == HttpStatusCode.valueOf(401)) {
                     throw new SimulateHubBankCustomerException("Usuario não autenticado");
                 }
-                
+
                 try {
                     HubBankResponseErrorType errorType = parseErrorResponse(e);
 
                     if (RETRYABLE_ERRORS.contains(errorType)) {
                         retries++;
                         sleepAndRetry();
-                        continue; 
+                        continue;
                     }
                     return mapErrorTypeToMessage(errorType);
                 } catch (JsonProcessingException jsonEx) {
@@ -82,20 +80,21 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
             } catch (RestClientException e) {
                 throw new SimulateHubBankCustomerException("Erro enviando requisição para o banco Hub");
             } catch (JsonProcessingException e) {
-                throw new SimulateHubBankCustomerException("Falha ao processar o JSON de uma resposta de sucesso do banco Hub.");
+                throw new SimulateHubBankCustomerException(
+                        "Falha ao processar o JSON de uma resposta de sucesso do banco Hub.");
             }
-        } 
-        
+        }
+
         return "ERRO NA REQUISIÇÃO";
     }
 
     private HttpEntity<HubBankSimulateRequestDto> createRequest(String acessToken, String customerCpf) {
         HubBankSimulateRequestDto dto = createHubBankSimulateRequestDto(customerCpf);
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + acessToken);
-        
+
         HttpEntity<HubBankSimulateRequestDto> request = new HttpEntity<>(dto, headers);
 
         return request;
@@ -110,29 +109,45 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
         return dto;
     }
 
-    private Double parseValue(ResponseEntity<String> responseEntity) throws JsonMappingException, JsonProcessingException {
+    private Double parseValue(ResponseEntity<String> responseEntity, String nomeTabelaFiltro)
+            throws JsonMappingException, JsonProcessingException {
         String responseBody = responseEntity.getBody();
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(responseBody);
 
-        JsonNode valueNode = rootNode.path("value").path(0).path("valorCliente");
+        JsonNode valueNode = rootNode.path("value");
+
+        for (JsonNode node : valueNode) {
+            String nomeTabela = node.path("nomeTabela").asText();
+            if (nomeTabelaFiltro.equals(nomeTabela)) {
+                JsonNode valorNode = node.path("valorCliente");
+                if (valorNode.isMissingNode()) {
+                    throw new SimulateHubBankCustomerException(
+                            "Campo 'valorCliente' não encontrado para a tabela " + nomeTabelaFiltro);
+                }
+                return valorNode.asDouble();
+            }
+        }
 
         if (valueNode.isMissingNode()) {
-             throw new SimulateHubBankCustomerException("Campo 'valorCliente' não encontrado na estrutura JSON esperada.");
+            throw new SimulateHubBankCustomerException(
+                    "Campo 'valorCliente' não encontrado na estrutura JSON esperada.");
         }
         return valueNode.asDouble();
     }
 
-    private HubBankResponseErrorType parseErrorResponse(HttpClientErrorException exception) throws JsonMappingException, JsonProcessingException {
+    private HubBankResponseErrorType parseErrorResponse(HttpClientErrorException exception)
+            throws JsonMappingException, JsonProcessingException {
         String responseBody = exception.getResponseBodyAsString();
         JsonNode rootNode = new ObjectMapper().readTree(responseBody);
         String errorMessage = rootNode.path("errors").get(0).asText();
-        
+
         if (errorMessage != null && !errorMessage.isEmpty()) {
             try {
                 return HubBankResponseErrorType.fromMessage(errorMessage);
             } catch (HubBankResponseErrorTypeException e) {
-                throw new SimulateHubBankCustomerException("Tipo de erro de negócio não mapeado pela aplicação: " + errorMessage);
+                throw new SimulateHubBankCustomerException(
+                        "Tipo de erro de negócio não mapeado pela aplicação: " + errorMessage);
             }
         }
 
@@ -150,21 +165,22 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
             case FIDUCIARY_INSTITUTION:
             case BANKS_NOT_AUTHORIZED:
             case OPERATION_TEMPORARILY_BLOCKED:
-            case WORKER_HAS_NO_FGTS_ACCOUNT: 
+            case WORKER_HAS_NO_FGTS_ACCOUNT:
                 return "NÃO AUTORIZADO";
-                
+
             default:
                 return "NÃO AUTORIZADO";
         }
     }
 
-    private void sleepAndRetry() {   
+    private void sleepAndRetry() {
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new SimulateHubBankCustomerException("A thread foi interrompida durante o tempo de espera para retentativa.");
+            throw new SimulateHubBankCustomerException(
+                    "A thread foi interrompida durante o tempo de espera para retentativa.");
         }
     }
-    
+
 }

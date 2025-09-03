@@ -11,21 +11,20 @@ import lombok.AllArgsConstructor;
 
 @Component
 @AllArgsConstructor
-public class ProcessRowHubBankService implements ProcessRowHubBankUseCase{
+public class ProcessRowHubBankService implements ProcessRowHubBankUseCase {
 
     private final SimulateHubBankCustomerUseCase simulateHubBankCustomerUseCase;
 
     private static final List<String> ERROS_QUE_PERMITEM_RETRY = List.of(
-        "Excedido o limite de requisições",
-        "Erro enviando requisição para o banco Hub",
-        "Erro de conexão com o banco Hub"
-    );
+            "Excedido o limite de requisições",
+            "Erro enviando requisição para o banco Hub",
+            "Erro de conexão com o banco Hub");
 
     private static final int MAX_TENTATIVAS = 10;
-    private static final long TEMPO_ESPERA_MS = 2000; 
+    private static final long TEMPO_ESPERA_MS = 2000;
 
     @Override
-    public String execute(RestTemplate session, String acessToken, String customerCPF) {
+    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
         int tentativa = 1;
 
         while (tentativa <= MAX_TENTATIVAS) {
@@ -35,7 +34,7 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase{
             }
 
             try {
-                String resultado = processar(session, acessToken, customerCPF);
+                String resultado = processar(session, acessToken, customerCPF, nomeTabelaFiltro);
                 System.out.println("[HUB] Tentativa " + tentativa + ": " + resultado);
 
                 if (isErro(resultado)) {
@@ -81,7 +80,8 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase{
     }
 
     private boolean isErro(String resultado) {
-        if (resultado == null) return true;
+        if (resultado == null)
+            return true;
 
         try {
             Double.parseDouble(resultado);
@@ -90,17 +90,18 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase{
 
         }
 
-        return resultado.contains("Falha") || 
-               resultado.contains("indisponivel") || 
-               resultado.contains("Excedido") || 
-               resultado.contains("Limite") || 
-               resultado.contains("ERRO") || 
-               resultado.equals("SEM SALDO") == false && resultado.matches(".*(NÃO AUTORIZADO|CPF INVÁLIDO).*") == false;
+        return resultado.contains("Falha") ||
+                resultado.contains("indisponivel") ||
+                resultado.contains("Excedido") ||
+                resultado.contains("Limite") ||
+                resultado.contains("ERRO") ||
+                resultado.equals("SEM SALDO") == false
+                        && resultado.matches(".*(NÃO AUTORIZADO|CPF INVÁLIDO).*") == false;
     }
 
-    private String processar(RestTemplate session, String acessToken, String customerCPF) {
+    private String processar(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
         try {
-            return simulateHubBankCustomerUseCase.execute(session, acessToken, customerCPF);
+            return simulateHubBankCustomerUseCase.execute(session, acessToken, customerCPF, nomeTabelaFiltro);
         } catch (Exception e) {
             return tratarMensagemDeErro(e.getMessage());
         }

@@ -39,7 +39,8 @@ public class StartCsvProcessingService implements StartCsvProcessingUseCase {
                 dto.getUsuarios(),
                 dto.getEmail(),
                 logSender,
-                bankEntity.getName());
+                bankEntity.getName(),
+                dto.getNomeTabelaFiltro());
 
         return processoId;
     }

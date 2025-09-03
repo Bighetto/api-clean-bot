@@ -31,6 +31,7 @@ import api.bank.domain.usecase.CsvProcessManagerUseCase;
 import api.bank.domain.usecase.GetUserBankHubTokenUseCase;
 import api.bank.domain.usecase.GetUserBankV8TokenUseCase;
 import api.bank.domain.usecase.LogSenderUseCase;
+import api.bank.domain.usecase.ProcessRowHubBankUseCase;
 import api.bank.domain.usecase.ProcessRowUseCase;
 import api.bank.domain.usecase.UpdateCsvIdProcessUseCase;
 import api.bank.domain.usecase.UpdateCsvStatusUseCase;
@@ -47,7 +48,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
     private final BankUserDataProvider bankUserDataProvider;
     private final GetUserBankV8TokenUseCase getTokenUseCase;
     private final GetUserBankHubTokenUseCase getUserBankHubTokenUseCase;
-    private final ProcessRowHubBankService processRowHubBankService;
+    private final ProcessRowHubBankUseCase processRowHubBankService;
     private final ProcessRowUseCase processRowUseCase;
     private final CreateRestTemplateSessionUseCase createRestTemplateSessionUseCase;
     private final AESEncryptor aesEncryptor;
@@ -58,7 +59,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender,
-            String bankName) {
+            String bankName, String nomeTabelaFiltro) {
 
         Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId,
                 PageRequest.of(0, 1));
@@ -143,7 +144,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                             token = this.getUserBankHubTokenUseCase.execute(user.get().getLogin(),
                                                     password);
                                             result = this.processRowHubBankService.execute(restTemplate, token,
-                                                    registro.getDocumentClient());
+                                                    registro.getDocumentClient(), nomeTabelaFiltro);
                                             registro.setValueResult(result);
                                             break;
                                         default:
