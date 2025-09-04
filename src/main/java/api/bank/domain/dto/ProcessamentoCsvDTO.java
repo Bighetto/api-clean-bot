@@ -12,4 +12,5 @@ public class ProcessamentoCsvDTO {
     private String bankName;
     private List<String> usuarios;
     private String nomeTabelaFiltro;
+    private String bancarizador;
 }

@@ -35,21 +35,21 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalanceUseCase {
-    
+
     private final V8BankConfigDataProvider v8BankConfigDataProvider;
 
     @Override
     public ConsultV8CustomerBalanceResponse execute(RestTemplate session, String acessToken, String customerCPF) {
-        
+
         String urlConsultBalance = this.v8BankConfigDataProvider.getAudience().concat("/fgts/balance");
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + acessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("documentNumber", customerCPF);
-            requestBody.put("provider", "bms");
+        requestBody.put("documentNumber", customerCPF);
+        requestBody.put("provider", "bms");
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
@@ -57,7 +57,7 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
         Integer maxRetries = 3;
 
         ConsultV8CustomerBalanceResponse dto = new ConsultV8CustomerBalanceResponse();
-        
+
         while (retries < maxRetries) {
 
             ResponseEntity<String> response = null;
@@ -67,17 +67,17 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                 response = session.postForEntity(urlConsultBalance, requestEntity, String.class);
                 balance = response.getBody();
 
-                if(response.getBody().equals("null")) {
+                if (response.getBody().equals("null")) {
                     UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(urlConsultBalance)
-                    .queryParam("search", customerCPF)
-                    .queryParam("status", "success")
-                    .queryParam("page", 1)
-                    .queryParam("limit", 1);
+                            .queryParam("search", customerCPF)
+                            .queryParam("status", "success")
+                            .queryParam("page", 1)
+                            .queryParam("limit", 1);
 
                     HttpEntity<Void> getRequest = new HttpEntity<>(headers);
                     response = session.exchange(builder.toUriString(), HttpMethod.GET, getRequest, String.class);
-                    balance = response.getBody();  
-                } 
+                    balance = response.getBody();
+                }
 
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode rootNode = mapper.readTree(balance);
@@ -86,7 +86,8 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                 JsonNode firstDataElement = dataNode.get(0);
 
                 String balanceId = firstDataElement.get("id").asText();
-                JsonNode balancePeriods = firstDataElement.has("periods") ? firstDataElement.get("periods") : mapper.createArrayNode();
+                JsonNode balancePeriods = firstDataElement.has("periods") ? firstDataElement.get("periods")
+                        : mapper.createArrayNode();
 
                 List<Object> newBalancePeriods = new ArrayList<>();
 
@@ -105,10 +106,10 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                 dto.setBalancePeriods(newBalancePeriods);
                 dto.setBalanceId(balanceId);
                 dto.setValidCustomer(true);
-                
+
                 break;
 
-            } catch (HttpClientErrorException  e) {
+            } catch (HttpClientErrorException e) {
 
                 switch (e.getStatusCode().value()) {
                     case 400:
@@ -120,25 +121,25 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                     case 429:
                         sleepAndRetry();
                         retries += 1;
-                        
+
                     default:
                         throw new ConsultV8CustomerBalanceException("Unexpected http response");
                 }
-                
+
             } catch (HttpServerErrorException e) {
 
                 try {
                     String errorMessage = new ObjectMapper()
-                    .readTree(e.getResponseBodyAsString())
-                    .path("error")
-                    .asText();
+                            .readTree(e.getResponseBodyAsString())
+                            .path("error")
+                            .asText();
 
                     V8ResponseErrorType errorType = V8ResponseErrorType.fromMessage(errorMessage);
 
                     if (errorType != null) {
 
                         switch (errorType) {
-                            case VALUES_MUST_HAVE_AT_LEAST_ONE_VALUE:  
+                            case VALUES_MUST_HAVE_AT_LEAST_ONE_VALUE:
                             case INSUFFICIENT_BALANCE:
                             case COSTS_EXCEED_FINANCED_AMOUNT:
                             case WORKER_NOT_BIRTHYDAY:
@@ -172,14 +173,14 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
                 } catch (JsonProcessingException exception) {
                     throw new ConsultV8CustomerBalanceException("Error processing Json");
                 }
-    
+
             } catch (ResourceAccessException e) {
                 throw new ConsultV8CustomerBalanceException("Connection error with V8Bank");
             } catch (RestClientException e) {
                 throw new GetUserBankV8TokenException("Error sending request to V8Bank");
             } catch (JsonProcessingException e) {
                 throw new ConsultV8CustomerBalanceException("Error processing response from Bank V8");
-            } 
+            }
         }
 
         return dto;
@@ -198,7 +199,7 @@ public class ConsultV8CustomerBalanceService implements ConsultV8CustomerBalance
     }
 
     private void sleepAndRetry() {
-        
+
         try {
             Thread.sleep(5000);
         } catch (InterruptedException exception) {

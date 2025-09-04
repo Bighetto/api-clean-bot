@@ -24,7 +24,8 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase {
     private static final long TEMPO_ESPERA_MS = 2000;
 
     @Override
-    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
+    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro,
+            String bancarizador) {
         int tentativa = 1;
 
         while (tentativa <= MAX_TENTATIVAS) {
@@ -34,7 +35,7 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase {
             }
 
             try {
-                String resultado = processar(session, acessToken, customerCPF, nomeTabelaFiltro);
+                String resultado = processar(session, acessToken, customerCPF, nomeTabelaFiltro, bancarizador);
                 System.out.println("[HUB] Tentativa " + tentativa + ": " + resultado);
 
                 if (isErro(resultado)) {
@@ -99,9 +100,11 @@ public class ProcessRowHubBankService implements ProcessRowHubBankUseCase {
                         && resultado.matches(".*(NÃO AUTORIZADO|CPF INVÁLIDO).*") == false;
     }
 
-    private String processar(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
+    private String processar(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro,
+            String bancarizador) {
         try {
-            return simulateHubBankCustomerUseCase.execute(session, acessToken, customerCPF, nomeTabelaFiltro);
+            return simulateHubBankCustomerUseCase.execute(session, acessToken, customerCPF, nomeTabelaFiltro,
+                    bancarizador);
         } catch (Exception e) {
             return tratarMensagemDeErro(e.getMessage());
         }

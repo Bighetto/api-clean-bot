@@ -42,13 +42,14 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
             HubBankResponseErrorType.FIDUCIARY_OPERATION_IN_PROGRESS);
 
     @Override
-    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro) {
+    public String execute(RestTemplate session, String acessToken, String customerCPF, String nomeTabelaFiltro,
+            String bancarizador) {
         Integer retries = 0;
         final String HUB_BANK_SIMULATE_URL = this.hubBankConfigDataProvider.getHubBankURLSimulate();
 
         while (retries < maxRetries) {
             try {
-                HttpEntity<HubBankSimulateRequestDto> request = createRequest(acessToken, customerCPF);
+                HttpEntity<HubBankSimulateRequestDto> request = createRequest(acessToken, customerCPF, bancarizador);
 
                 ResponseEntity<String> responseEntity = session.postForEntity(
                         HUB_BANK_SIMULATE_URL,
@@ -88,8 +89,9 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
         return "ERRO NA REQUISIÇÃO";
     }
 
-    private HttpEntity<HubBankSimulateRequestDto> createRequest(String acessToken, String customerCpf) {
-        HubBankSimulateRequestDto dto = createHubBankSimulateRequestDto(customerCpf);
+    private HttpEntity<HubBankSimulateRequestDto> createRequest(String acessToken, String customerCpf,
+            String bancarizador) {
+        HubBankSimulateRequestDto dto = createHubBankSimulateRequestDto(customerCpf, bancarizador);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -100,11 +102,11 @@ public class SimulateHubBankCustomerService implements SimulateHubBankCustomerUs
         return request;
     }
 
-    private HubBankSimulateRequestDto createHubBankSimulateRequestDto(String customerCPF) {
+    private HubBankSimulateRequestDto createHubBankSimulateRequestDto(String customerCPF, String bancarizador) {
         HubBankSimulateRequestDto dto = new HubBankSimulateRequestDto();
         dto.setCpfCliente(customerCPF);
         dto.setLojaId(hubBankConfigDataProvider.getLojaId());
-        dto.setBancarizador("BMP");
+        dto.setBancarizador(bancarizador);
 
         return dto;
     }

@@ -59,7 +59,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
 
     @Override
     public String iniciarProcessamento(String csvId, List<String> usuarios, String email, LogSenderUseCase logSender,
-            String bankName, String nomeTabelaFiltro) {
+            String bankName, String nomeTabelaFiltro, String bancarizador) {
 
         Page<ConsultationEventsEntity> paginaInicial = consultationEventsDataProvider.findValidByCsvId(csvId,
                 PageRequest.of(0, 1));
@@ -144,7 +144,7 @@ public class CsvProcessManagerService implements CsvProcessManagerUseCase {
                                             token = this.getUserBankHubTokenUseCase.execute(user.get().getLogin(),
                                                     password);
                                             result = this.processRowHubBankService.execute(restTemplate, token,
-                                                    registro.getDocumentClient(), nomeTabelaFiltro);
+                                                    registro.getDocumentClient(), nomeTabelaFiltro, bancarizador);
                                             registro.setValueResult(result);
                                             break;
                                         default:
